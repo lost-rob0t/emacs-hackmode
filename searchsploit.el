@@ -128,13 +128,12 @@ Returns an alist."
      (searchsploit--insert-results results)
      (switch-to-buffer searchsploit-buffer)
 
-     (goto-char 1)))
+     (goto-char 1))))
 
 
 
 
-  (with-current-buffer (get-buffer-create searchsploit-buffer)
-    (searchsploit-buffer--setup)))
+  
 
 
 (defun searchsploit-search ()
@@ -155,8 +154,8 @@ Returns an alist."
 (defun searchsploit-mode ()
   "Major mode for searchsploit"
   (interactive)
-
   (kill-all-local-variables)
+  (searchsploit-buffer--setup)
   (use-local-map searchsploit-mode-map)
   (setq major-mode 'searchsploit-mode)
   (setq mode-name "SearchSploit")
