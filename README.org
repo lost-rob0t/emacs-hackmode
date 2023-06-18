@@ -1,0 +1,25 @@
+#+TITLE: Readme
+
+
+
+* Redteam lisp helpers for emacs
+
+This is a collection of random stuff I have created to speed up hack the box stuff
+
+
+Heres interesting stuff so far
+
+
++ hackmode-kill-upload: Copy your ip and the path to the selected tool with a wget/curl command
++ hackmode-serve-tools: Start python -m http.server at the base of ~hackmode-tools-dir~
++ hackmode-init: bootstrap a cookie cutter directory (ie scans, files notes.org)
++ searchsploit-search: search for exploits (kinda bugged)
+
+
+
+** TODO add stuff [0/6]
++ [ ] describe vars
++ [ ] fleshout hackmode-operations
++ [ ] fleshout checklist
++ [ ] fleshout hackmode (non emacs) interaction
++ [ ] Display tool output
