@@ -49,8 +49,6 @@
   "List of checklists")
 
 
-
-
 (defun get-interface-ip (interface)
   "Get the IP address of a network interface."
   (let ((output (shell-command-to-string (concat "ip addr show dev " interface " | grep 'inet '"))))
@@ -223,8 +221,28 @@ It also return the command in string form."
     (kill-new cmd)
     cmd))
 
+(defun hackmode-http-server (root port)
+  "Http server using python."
+  (start-process "http" (format "http.server:%s" port) (executable-find "python") "-m" "http.server" port "-d" root))
+
+
+(defun hackmode-stop-http ()
+  "Stop the http server."
+  (interactive)
+  (dolist (buffer (buffer-list))
+    (when (string-match-p "http" (buffer-name buffer))
+      (kill-buffer buffer))))
+
+(defun hackmode-serve-tools ()
+  "Serve the hackmode tools dir."
+  (interactive)
+  (let ((port (read-string "port: " "8000")))
+
+    (hackmode-http-server hackmode-tools-dir port)))
 
 
 
 (provide 'hackmode)
 ;;; hackmode.el ends here
+;;;
+;;;
