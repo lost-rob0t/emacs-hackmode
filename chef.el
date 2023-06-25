@@ -69,6 +69,16 @@
 
 
 
+(defun chef/b64-encode-from-kill ()
+  "base64 encode the current kill item and encode the result. Also adds it to the kill ring"
+  (interactive)
+  (kill-new (base64-encode-string (car kill-ring))))
+
+(defun chef/b64-decode-from-kill ()
+  "base64 decode the current kill item and decode the result. Also adds it to the kill ring"
+  (interactive)
+  (kill-new (base64-encode-string (car kill-ring))))
+
 
 
 
@@ -76,4 +86,4 @@
 
 
 (provide 'chef)
-;;; chef.el ends here
+;;; chef.el ends herE

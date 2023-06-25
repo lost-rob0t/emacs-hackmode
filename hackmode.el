@@ -233,6 +233,7 @@ It also return the command in string form."
     (when (string-match-p "http" (buffer-name buffer))
       (kill-buffer buffer))))
 
+
 (defun hackmode-serve-tools ()
   "Serve the hackmode tools dir."
   (interactive)
@@ -240,7 +241,21 @@ It also return the command in string form."
 
     (hackmode-http-server hackmode-tools-dir port)))
 
+(defun hackmode-pwncat ()
+  "Start a pwncat-cs shell using vterm."
+  (interactive)
+  (require 'vterm)
+  (let ((buffer-name "*pwncat*"))
+    (unless (get-buffer buffer-name)
+      (with-current-buffer (get-buffer-create buffer-name)
+        (vterm-mode)
+        (vterm-send-string "pwncat-cs -lp 9001")
+        (vterm-send-return)))
+    (switch-to-buffer buffer-name)))
 
+
+
+  
 
 (provide 'hackmode)
 ;;; hackmode.el ends here
