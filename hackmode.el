@@ -241,15 +241,21 @@ It also return the command in string form."
 
     (hackmode-http-server hackmode-tools-dir port)))
 
+(defcustom hackmode-pwncat-port "9001"
+  "Default Port to use for pwncat-cs.")
+
 (defun hackmode-pwncat ()
   "Start a pwncat-cs shell using vterm."
   (interactive)
   (require 'vterm)
-  (let ((buffer-name "*pwncat*"))
+  (let ((buffer-name "*pwncat*")
+        (port (read-string "Enter Port number: " hackmode-pwncat-port)))
+
     (unless (get-buffer buffer-name)
       (with-current-buffer (get-buffer-create buffer-name)
         (vterm-mode)
-        (vterm-send-string "pwncat-cs -lp 9001")
+
+        (vterm-send-string (format  "pwncat-cs -lp %s && exit" port))
         (vterm-send-return)))
     (switch-to-buffer buffer-name)))
 
