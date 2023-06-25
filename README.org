@@ -6,6 +6,7 @@
 
 This is a collection of random stuff I have created to speed up hack the box stuff
 
+Please check the [[./changelog.org][changelog]].
 
 Heres interesting stuff so far
 
@@ -14,8 +15,13 @@ Heres interesting stuff so far
 + hackmode-serve-tools: Start python -m http.server at the base of ~hackmode-tools-dir~
 + hackmode-init: bootstrap a cookie cutter directory (ie scans, files notes.org)
 + searchsploit-search: search for exploits (kinda bugged)
++ hackmode-pwncat: start a pwncat-cs shell (with vterm)
 
-
+** Deps
++ f.el
++ emacs-async
++ vterm
++ tools mentioned by function names.
 
 ** TODO add stuff [0/6]
 + [ ] describe vars

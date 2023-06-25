@@ -1,0 +1,5 @@
+* Changelog
+** [2023-06-25 Sun 04:50] 0.0.2
+Add pwncat-cs command that runs in vterm
+
+[[file:~/Documents/Projects/emacs-hackmode/hackmode.el::;; Version: 0.0.2]]

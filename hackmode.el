@@ -6,7 +6,7 @@
 ;; Maintainer:  <unseen@flake>
 ;; Created: May 21, 2023
 ;; Modified: May 21, 2023
-;; Version: 0.0.1
+;; Version: 0.0.2
 ;; Keywords: abbrev bib c calendar comm convenience data docs emulations extensions faces files frames games hardware help hypermedia i18n internal languages lisp local maint mail matching mouse multimedia news outlines processes terminals tex tools unix vc wp
 ;; Homepage: https://github.com/unseen/hackmode
 ;; Package-Requires: ((emacs "24.3"))
