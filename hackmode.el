@@ -9,7 +9,7 @@
 ;; Version: 0.0.2
 ;; Keywords: abbrev bib c calendar comm convenience data docs emulations extensions faces files frames games hardware help hypermedia i18n internal languages lisp local maint mail matching mouse multimedia news outlines processes terminals tex tools unix vc wp
 ;; Homepage: https://github.com/unseen/hackmode
-;; Package-Requires: ((emacs "24.3"))
+;; Package-Requires: ((emacs "24.3") (emacs-async "1.97") (f.el "v0.20.0"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
@@ -20,7 +20,8 @@
 ;;; Code:
 (require 'async)
 (require 'f)
-(require 'ht)
+(require 'hackmode-loot)
+(require 'searchsploit)
 (defvar-local hackmode-lib-hosts ()
   "Lists of known hosts. hosts are loaded from the dir names of the 'hackmode-lib-dir'.")
 
@@ -243,6 +244,8 @@ It also return the command in string form."
 (defcustom hackmode-pwncat-port "9001"
   "Default Port to use for pwncat-cs.")
 
+
+;; TODO move this away from vterm
 (defun hackmode-pwncat ()
   "Start a pwncat-cs shell using vterm."
   (interactive)
@@ -259,8 +262,6 @@ It also return the command in string form."
     (switch-to-buffer buffer-name)))
 
 
-
-  
 
 (provide 'hackmode)
 ;;; hackmode.el ends here
