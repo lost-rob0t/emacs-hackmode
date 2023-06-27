@@ -36,13 +36,13 @@
   "The Default path where tools to be uploaded will be pulled from.")
 
 
-(defvar-local hackmode-operation hackmode-default-operation
+(defvar hackmode-operation hackmode-default-operation
   "Current operation name. Do not set this, instead use 'hackmode-lib-default-operation' or 'hackmode-lib-switch-op'")
 
-(defcustom hackmode-interface 'string
+(defcustom hackmode-interface "tun0"
   "Network interface to use by default")
 
-(defcustom hackmode-templates 'string
+(defcustom hackmode-templates (f-expand "~/.config/hackmode/templates")
   "Path to templates directory")
 
 (defcustom hackmode-checklists 'list
@@ -118,10 +118,7 @@ ones and overrule settings in the other lists."
 
 
 
-(defvar-local hackmode-hosts nil
-  "list of hosts currently known")
-(defvar-local hackmode-database nil
-  "current database")
+
 (defvar hackmode-focus-target nil
   "Current host")
 (defvar hackmode-focus-mode nil
@@ -194,8 +191,10 @@ You can also M-X hackmode-switch-op to switch"
   "Interactivly create a operation."
   (interactive)
   (let* ((template (completing-read "Select Template: " (f-directories hackmode-templates)))
-         (name (read-string "Enter Operaton Name: ")))
-    (f-copy template (f-join default-directory name))))
+         (name (read-string "Enter Operaton Name: "))
+         (op-path (hackmode-get-operation-path name)))
+    (f-copy template op-path)
+    (f-symlink op-path default-directory)))
 
 (defun hackmode-kill-wordlist ()
   "Copy the path of a wordlist to the kill ring"
