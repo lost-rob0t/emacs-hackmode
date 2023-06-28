@@ -38,10 +38,10 @@
     (prin1 hackmode-loot (current-buffer))))
 
 (defun hackmode-load-loot-data ()
-  "Read an S-expression from a file and return it as a value."
+  "Read an S-expression from the loot file."
   (with-temp-buffer
     (insert-file-contents (hackmode-get-loot-file hackmode-operation))
-    (car (read-from-string (buffer-string)))))
+    (setq hackmode-loot (car (read-from-string (buffer-string))))))
 
 (defun hackmode-loot-format-data (key value &optional note)
   "Format a loot VALUE to be saved as KEY in loot file. NOTE is optional."
@@ -97,6 +97,8 @@
   "Save a piece of loot."
   (interactive)
   (hackmode-popup "Capture: " 0 hackmode-loot-menu))
+
+
 
 (provide 'hackmode-loot)
 ;;; hackmode-loot.el ends here

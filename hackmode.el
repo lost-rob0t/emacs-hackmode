@@ -7,21 +7,22 @@
 ;; Created: May 21, 2023
 ;; Modified: May 21, 2023
 ;; Version: 0.0.2
-;; Keywords: abbrev bib c calendar comm convenience data docs emulations extensions faces files frames games hardware help hypermedia i18n internal languages lisp local maint mail matching mouse multimedia news outlines processes terminals tex tools unix vc wp
+;; Keywords: security hacking
 ;; Homepage: https://github.com/unseen/hackmode
-;; Package-Requires: ((emacs "24.3") (emacs-async "1.97") (f.el "v0.20.0"))
+;; Package-Requires: ((emacs "28.2") (emacs-async "1.97") (f.el "v0.20.0"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
 ;;; Commentary:
 ;;
-;;  Pentesters Lil lisp redpill
+;;  Pentesters Lil Lisp redpill.
 ;;
 ;;; Code:
 (require 'async)
 (require 'f)
 (require 'hackmode-loot)
 (require 'searchsploit)
+
 (defvar-local hackmode-lib-hosts ()
   "Lists of known hosts. hosts are loaded from the dir names of the 'hackmode-lib-dir'.")
 
@@ -30,24 +31,24 @@
 (defvar hackmode-default-operation "default"
   "The default operation to use.")
 
-(defvar hackmode-operation-hook (list #'(lambda () (hackmode-goto-operation)))
+(defvar hackmode-operation-hook nil
   "Hook for when operation is changed")
 
-(defcustom hackmode-tools-dir 'string
+(defcustom hackmode-tools-dir (f-join hackmode-dir "hackmode-tools/")
   "The Default path where tools to be uploaded will be pulled from.")
 
 
 (defvar hackmode-operation hackmode-default-operation
-  "Current operation name. Do not set this, instead use 'hackmode-lib-default-operation' or 'hackmode-lib-switch-op'")
+  "Current operation name. Do not set this, instead use 'hackmode-lib-default-operation' or 'hackmode-lib-switch-op'.")
 
 (defcustom hackmode-interface "tun0"
   "Network interface to use by default")
 
 (defcustom hackmode-templates (f-expand "~/.config/hackmode/templates")
-  "Path to templates directory")
+  "Path to templates directory.")
 
 (defcustom hackmode-checklists 'list
-  "List of checklists")
+  "List of checklists.")
 
 
 ;; Source: https://emacs.stackexchange.com/a/35033
