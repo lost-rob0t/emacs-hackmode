@@ -323,6 +323,11 @@ It also return the command in string form."
 
 
 
+;; Add hooks area
+
+(add-hook 'hackmode-operation-hook #'hackmode-goto-operation)
+(add-hook 'hackmode-operation-hook #'hackmode-load-loot-data)
+
 (provide 'hackmode)
 ;;; hackmode.el ends here
 ;;;
