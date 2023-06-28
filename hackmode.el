@@ -30,7 +30,7 @@
 (defvar hackmode-default-operation "default"
   "The default operation to use.")
 
-(defvar hackmode-operation-hook nil
+(defvar hackmode-operation-hook (list #'(lambda () (hackmode-goto-operation)))
   "Hook for when operation is changed")
 
 (defcustom hackmode-tools-dir 'string
@@ -48,6 +48,46 @@
 
 (defcustom hackmode-checklists 'list
   "List of checklists")
+
+
+;; Source: https://emacs.stackexchange.com/a/35033
+(defun hackmode-popup (prompt default-index content)
+  "Pop up menu
+Takes args: prompt, default-index, content).
+Where the content is any number of (string, function) pairs,
+each representing a menu item."
+  (cond
+   ;; Ivy (optional)
+   ((fboundp 'ivy-read)
+    (ivy-read
+     prompt content
+     :preselect
+     (cond
+      ((= default-index -1)
+       nil)
+      (t
+       default-index))
+     :require-match t
+     :action
+     (lambda (x)
+       (pcase-let ((`(,_text . ,action) x))
+         (funcall action)))
+     :caller #'custom-popup))
+
+   ;; Fallback to completing read.
+   (t
+    (let ((choice
+           (funcall completing-read-function
+                    prompt
+                    content
+                    nil
+                    t
+                    nil
+                    nil
+                    (nth default-index content))))
+      (pcase-let ((`(,_text . ,action) (assoc choice content)))
+        (funcall action))))))
+
 
 
 (defun get-interface-ip (interface)
@@ -86,12 +126,12 @@ ones and overrule settings in the other lists."
 
 (defun hackmode-operations ()
   "Return a list of operations."
-  (f-directories (f-full hackmode-dir)))
+  (mapcar #'f-base (f-directories (f-full hackmode-dir))))
 
 (defun hackmode-switch-op ()
   "Switch operation."
   (interactive)
-  (let ((op (completing-read "Select operation: " (hackmode-lib-operations))))
+  (let ((op (completing-read "Select operation: " (hackmode-operations))))
    (setq hackmode-operation op)
    (run-hooks 'hackmode-operation-hook)))
 
@@ -120,9 +160,9 @@ ones and overrule settings in the other lists."
 
 
 
-(defvar hackmode-focus-target nil
+(defvar hackmode-focus-target "No Target"
   "Current host")
-(defvar hackmode-focus-mode nil
+(defvar hackmode-focus-mode "host"
   "type of target we are looking at")
 
 (defvar hackmode-new-host-hook nil
@@ -154,15 +194,28 @@ You can also M-X hackmode-switch-op to switch"
 
 
 (defun hackmode-mode-line ()
-  (let ((hackmode-line)))
-  (format "%s %s %s" hackmode-operation hackmode-focus-target hackmode-focus-mode))
+  "Set the hackmode-mode-line"
+  (interactive)
+  (let ((hackmode-line
+         (format "%s %s %s" hackmode-operation hackmode-focus-target hackmode-focus-mode)))
+
+
+
+    (setq global-mode-string
+          (cond ((consp global-mode-string)
+                 (add-to-list 'global-mode-string hackmodemode-line 'APPEND))
+                ((not global-mode-string)
+                 (list hackmode-line))
+                ((stringp global-mode-string)
+                 (list global-mode-string hackmode-line))))))
+
 
 (defun hackmode-switch-op ()
   "Switch operation."
   (interactive)
-  (let ((op (completing-read "Select operation: " (hackmode-lib-operations))))
-   (setq hackmode-lib-current-operation op)
-   (run-hooks 'hackmode-lib-operation-hook)))
+  (let ((op (completing-read "Select operation: " (hackmode-operations))))
+    (setq hackmode-operation op)
+    (run-hooks 'hackmode-operation-hook)))
 
 (defun hackmode-new-operation ()
   "Create a new operation to group tasks"
@@ -173,6 +226,12 @@ You can also M-X hackmode-switch-op to switch"
      (progn
        (make-directory (hackmode-lib-get-operation-path name))
        (message (format "operation %s created" name))))))
+
+
+(defun hackmode-goto-operation ()
+  "Go to the operation directory."
+  (interactive)
+  (find-file (hackmode-get-operation-path hackmode-operation)))
 
 
 ;; QOL Stuff
