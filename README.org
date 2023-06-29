@@ -6,7 +6,7 @@
 
 This is a collection of random stuff I have created to speed up hack the box stuff
 
-Please check the [[./changelog.org][changelog]].
+Please check the [[./changelog.org][changelog]] and the [[file:wiki/README.org][wiki]].
 
 Heres interesting stuff so far
 

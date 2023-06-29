@@ -1,0 +1,20 @@
+#+TITLE: Ops
+
+
+* Operations
+In hackmode an operation is a directory where you store notes and scan output.
+
+Operations live in your [[help:hackmode-dir][hackmode-dir]], if you create an operation outside that directory it will be symlinked to your current directory.
+
+** Usage
++ You can create an operation with [[help:hackmode-init][hackmode-init]].
++ You can switch to an operation with [[help:hackmode-switch-op][hackmode-switch-op]].
++ You can go to the directory with [[help:hackmode-goto-operation][hackmode-goto-operation]].
+
+** Vars
+
++ path to where operations are stored [[help:hackmode-dir][hackmode-dir]].
++ current operation [[help:hackmode-operation][hackmode-operation]].
+
++ hook ran when operation loaded [[help:hackmode-operation-hook][hackmode-operation-hook]].
+  By default hook is just loading the lootfile and navigating to the current ~[[help:hackmode-operation][hackmode-operation]].

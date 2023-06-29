@@ -187,8 +187,9 @@ You can also M-X hackmode-switch-op to switch"
 (defun hackmode-focus ()
   "Interactively set the target in focus."
   (interactive)
-  (let ((target (read-string "Enter a target: "))
-        (type (read-string "Enter Type: " "host")))
+  (let* ((type (completing-read "Type: " (mapcar #'car hackmode-loot)))
+         (target (completing-read "Target: " (mapcar #'car (cdr (assoc type hackmode-loot))))))
+
 
     (setq hackmode-focus-target target)
     (setq hackmode-focus-mode type)))
@@ -255,7 +256,8 @@ You can also M-X hackmode-switch-op to switch"
          (name (read-string "Enter Operaton Name: "))
          (op-path (hackmode-get-operation-path name)))
     (f-copy template op-path)
-    (f-symlink op-path default-directory)))
+    (f-symlink op-path default-directory)
+    (f-touch (f-join op-path ".loot.lisp"))))
 
 (defun hackmode-kill-wordlist ()
   "Copy the path of a wordlist to the kill ring"
