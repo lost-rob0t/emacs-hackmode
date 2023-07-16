@@ -20,7 +20,6 @@
 ;;; Code:
 
 (require 'f)
-(require 'hackmode)
 (defun hackmode-get-loot-file (name)
   "return the path to the lootfile in the operation path."
   (f-join (hackmode-get-operation-path name) ".loot.lisp"))
@@ -39,18 +38,41 @@
 
 (defun hackmode-load-loot-data ()
   "Read an S-expression from the loot file."
+  (interactive)
   (with-temp-buffer
     (insert-file-contents (hackmode-get-loot-file hackmode-operation))
     (setq hackmode-loot (car (read-from-string (buffer-string))))))
+
+
 
 (defun hackmode-loot-format-data (key value &optional note)
   "Format a loot VALUE to be saved as KEY in loot file. NOTE is optional."
   (list key (list :note note :value value)))
 
+(defun hackmode-loot-get-topic-keys (topic)
+  "Return all keys for given loot TOPIC."
+  (mapcar #'car  (cdr (assoc topic hackmode-loot))))
+
+(defun hackmode-loot-get-key (topic key)
+  (assoc key  (cdr (assoc topic hackmode-loot))))
+
+
+ 
+
 (defun hackmode-insert-loot (topic key value &optional note)
   "Insert a piece of loot if it does not exist already."
   (cl-pushnew (hackmode-loot-format-data key value note) (alist-get topic hackmode-loot))
   (hackmode-save-loot-data))
+;; TODO Fix this
+(defun hackmode-loot-update (topic key value &optional note)
+  "Update loot under TOPIC with new VALUE"
+  (let* ((topics (copy-alist (alist-get topic hackmode-loot)))
+         (keys (assoc-delete-all key topics)))
+    (push (hackmode-loot-format-data key value) topics)
+    (assoc-delete-all topic hackmode-loot)
+    (push (cons topic topics) hackmode-loot)
+    (hackmode-save-loot-data)))
+
 
 
 
@@ -78,18 +100,29 @@
          (url (read-string "Enter url to save: " (if (org-url-p data) data)))
 
          (note  (if (yes-or-no-p "Enter a note?: " ) (hackmode-loot-read-note) "")))
-    (hackmode-insert-loot 'urls (md5 url) url note)))
+    (hackmode-insert-loot 'urls url nil note)))
+
+
+
+
+
 (defun hackmode-loot-save-host ()
   "Save a host to the loot file."
   (let ((addr (read-string "Enter host address: " (current-kill 0)))
 
         (note  (if (yes-or-no-p "Enter a note?: " ) (hackmode-loot-read-note) "")))
-    (hackmode-insert-loot 'hosts (md5 addr) addr note)))
+    (hackmode-insert-loot 'hosts addr nil note)))
 
+
+(defun hackmode-loot-save-port ()
+  (let ((addr (completing-read "Select Host: " (hackmode-get-topic-keys)))
+        (port (read-string "Port Number: " "80")))
+    (hackmode-insert-loot 'hosts)))
 
 (defcustom hackmode-loot-menu '(("Credential" . hackmode-loot-save-password)
                                 ("url" . hackmode-loot-save-url)
                                 ("host" . hackmode-loot-save-host)
+                                ("post" . hackmode-loot-save-port)
                                 ("email" . hackmode-loot-save-email))
   "Alist of things to save to the loot file. The the menu values must be functions.")
 

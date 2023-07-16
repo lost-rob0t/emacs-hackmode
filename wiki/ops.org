@@ -17,4 +17,4 @@ Operations live in your [[help:hackmode-dir][hackmode-dir]], if you create an op
 + current operation [[help:hackmode-operation][hackmode-operation]].
 
 + hook ran when operation loaded [[help:hackmode-operation-hook][hackmode-operation-hook]].
-  By default hook is just loading the lootfile and navigating to the current ~[[help:hackmode-operation][hackmode-operation]].
+  By default hook is just loading the lootfile and navigating to the current [[help:hackmode-operation][hackmode-operation]].

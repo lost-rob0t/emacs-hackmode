@@ -256,16 +256,24 @@ You can also M-X hackmode-switch-op to switch"
          (name (read-string "Enter Operaton Name: "))
          (op-path (hackmode-get-operation-path name)))
     (f-copy template op-path)
-    (f-symlink op-path default-directory)
-    (f-touch (f-join op-path ".loot.lisp"))))
+    (f-symlink op-path default-directory)))
+    
 
 (defun hackmode-kill-wordlist ()
   "Copy the path of a wordlist to the kill ring"
   (interactive)
   (kill-new (f-expand (read-file-name "Select Wordlist: " (f-expand hackmode-wordlist-dir)))))
 
+
+(defun hackmode-insert-wordlist ()
+  "Copy the path of a wordlist to the kill ring"
+  (interactive)
+  (insert (f-expand (read-file-name "Select Wordlist: " (f-expand hackmode-wordlist-dir)))))
+
+
+
 (defun hackmode-create-checklist (name description &rest tasks)
-  (list :name name :description description :tasks (apply #'list tasks)))
+  (list :name nam :description description :tasks (apply #'list tasks)))
 
 
 
@@ -326,7 +334,7 @@ It also return the command in string form."
 
 
 ;; Add hooks area
-
+(add-hook 'hackmkde-operation-hook #'(lambda () (setq hackmode-loot nil)))
 (add-hook 'hackmode-operation-hook #'hackmode-goto-operation)
 (add-hook 'hackmode-operation-hook #'hackmode-load-loot-data)
 
