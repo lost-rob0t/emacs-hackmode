@@ -1,0 +1,17 @@
+#+title: Searchsploit
+
+* SearchSploit
+Searchsploit Allows You to search for known exploits for a product.
+
+searchsploit.el requires searchsploit to be installed.
+
+
+To search for a exploit invoke [[help:searchsploit][searchsploit]].
+By default the keybinds are:
++ c: Copy an exploit to current dir
++ Y: Copy exploit id
++ s: search
+
+
+#+DOWNLOADED: screenshot @ 2023-08-03 16:09:49
+[[file:SearchSploit/2023-08-03_16-09-49_screenshot.png]]
