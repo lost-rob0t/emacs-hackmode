@@ -224,7 +224,13 @@ Returns an alist."
   (setq buffer-read-only t)
 
   (use-local-map searchsploit-mode-map)
-  (buffer-disable-undo))
+  (buffer-disable-undo)
+  (define-key searchsploit-mode-map "s" #'searchsploit-search)
+  (define-key searchsploit-mode-map "c" #'searchsploit-copy-exploit)
+  (define-key searchsploit-mode-map "Y" #'searchsploit-yank-id))
+
+
+
 
 (defun searchsploit ()
   "search for exploits from emacs"
@@ -240,10 +246,6 @@ Returns an alist."
    
 
 
-
-(define-key searchsploit-mode-map "s" #'searchsploit-search)
-(define-key searchsploit-mode-map "c" #'searchsploit-copy-exploit)
-(define-key searchsploit-mode-map "Y" #'searchsploit-yank-id)
 
 
 (provide 'searchsploit)

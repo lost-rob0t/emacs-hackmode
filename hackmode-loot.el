@@ -91,6 +91,7 @@
 
 (defun hackmode-loot-save-password ()
   "Save a credential to the loot file."
+  (interactive)
   (let* ((data (split-string (current-kill 0) ":"))
          (user (read-string "Enter User: " (if (> (length data) 1) (nth 0 data))))
          (password (read-string "Enter password: " (if (> (length data) 1) (nth 1 data))))
@@ -102,11 +103,33 @@
 
 (defun hackmode-loot-save-url ()
   "Save a url to the loot file."
+  (interactive)
   (let* ((data (current-kill 0))
          (url (read-string "Enter url to save: " (if (org-url-p data) data)))
 
          (note  (if (yes-or-no-p "Enter a note?: " ) (hackmode-loot-read-note) "")))
     (hackmode-insert-loot 'urls url nil note)))
+
+(defun hackmode-loot-save-email ()
+  "Save a url to the loot file."
+  (interactive)
+  (let* ((data (current-kill 0))
+         (email (read-string "Enter Email to save: " (if (not (null data)) data)))
+
+         (note  (if (yes-or-no-p "Enter a note?: " ) (hackmode-loot-read-note) "")))
+    (hackmode-insert-loot 'emails email nil note)))
+
+
+
+
+(defun hackmode-loot-save-user ()
+  "Save a url to the loot file."
+  (interactive)
+  (let* ((data (current-kill 0))
+         (user (read-string "Enter Email to save: " (if (not (null data)) data)))
+
+         (note  (if (yes-or-no-p "Enter a note?: " ) (hackmode-loot-read-note) "")))
+    (hackmode-insert-loot 'users user nil note)))
 
 
 
@@ -114,6 +137,7 @@
 
 (defun hackmode-loot-save-host ()
   "Save a host to the loot file."
+  (interactive)
   (let ((addr (read-string "Enter host address: " (current-kill 0)))
 
         (note  (if (yes-or-no-p "Enter a note?: " ) (hackmode-loot-read-note) "")))
@@ -121,6 +145,7 @@
 
 
 (defun hackmode-loot-save-port ()
+  (interactive)
   (let ((addr (completing-read "Select Host: " (hackmode-get-topic-keys)))
         (port (read-string "Port Number: " "80")))
     (hackmode-insert-loot 'hosts)))
@@ -129,6 +154,7 @@
                                 ("url" . hackmode-loot-save-url)
                                 ("host" . hackmode-loot-save-host)
                                 ("post" . hackmode-loot-save-port)
+                                ("post" . hackmode-loot-save-user)
                                 ("email" . hackmode-loot-save-email))
   "Alist of things to save to the loot file. The the menu values must be functions.")
 
