@@ -24,11 +24,17 @@
   "return the path to the lootfile in the operation path."
   (f-join (hackmode-get-operation-path name) ".loot.lisp"))
 
-
-
-
 (defvar hackmode-loot (list (cons 'creds nil) (cons 'urls nil) (cons 'emails nil))
   "The list of loot that has been in found. includes loot from other operations.")
+
+(defun hackmode-init-loot-file (name)
+  "Create The loot file if it does not exist"
+  (if (f-exists-p (hackmode-get-loot-file name))
+      nil
+    (progn
+      (f-touch (hackmode-get-loot-file name))
+      (hackmode-save-loot-data))))
+
 
 (defun hackmode-save-loot-data ()
   "Save loot to 'hackmode-loot-file'"

@@ -133,8 +133,9 @@ ones and overrule settings in the other lists."
   "Switch operation."
   (interactive)
   (let ((op (completing-read "Select operation: " (hackmode-operations))))
-   (setq hackmode-operation op)
-   (run-hooks 'hackmode-operation-hook)))
+    (setq hackmode-operation op)
+    (hackmode-init-loot-file op)
+    (run-hooks 'hackmode-operation-hook)))
 
 ;; TODO move this to hackmode.el
 (defun hackmode-new-operation ()
@@ -210,14 +211,6 @@ You can also M-X hackmode-switch-op to switch"
                  (list hackmode-line))
                 ((stringp global-mode-string)
                  (list global-mode-string hackmode-line))))))
-
-
-(defun hackmode-switch-op ()
-  "Switch operation."
-  (interactive)
-  (let ((op (completing-read "Select operation: " (hackmode-operations))))
-    (setq hackmode-operation op)
-    (run-hooks 'hackmode-operation-hook)))
 
 (defun hackmode-new-operation ()
   "Create a new operation to group tasks"
