@@ -60,6 +60,9 @@
 Returns an alist."
   (json-parse-string (shell-command-to-string (format "%s -j %s" hackmode-searchploit-path term)) :object-type 'alist))
 
+(defun searchsploit-get-exploit (id)
+  (shell-command (format "%s -m %s" hackmode-searchploit-path id)))
+
 (defun searchsploit--exploits (result)
   (cdr (assoc 'RESULTS_EXPLOIT result)))
 (defun searchsploit--papers (result)
@@ -95,6 +98,44 @@ Returns an alist."
 
 
 
+(defun searchsploit-set-version-face (start end)
+  "Highlight version strings within the region from START to END."
+  (let ((version-regex "\\b\\([0-9]+\\(\\.[0-9]+\\)*\\)\\b"))
+    (save-excursion
+      (goto-char start)
+      (while (re-search-forward version-regex end t)
+        (put-text-property (match-beginning 0) (match-end 0) 'face 'font-lock-warning-face)))))
+
+
+
+(defun searchsploit-set-exploit-type-face (start end)
+  "Highlight version strings within the region from START to END based on exploit type."
+  (let (
+        (remote-regex "\\bremote\\(\\.[0-9]+\\)*\\b")
+        (rce-regex "\\b\\(RCE\\|Remote Code Execution\\|Command Execution\\|Command Injection\\|Code Injection\\)\\b")
+        (dos-regex "\\b\\(DOS\\|dos\\|Denial Of Service\\|exhaustion\\|crash\\)\\b")
+        (local-regex "\\blocal\\(\\.[0-9]+\\)*\\b"))
+
+    (save-excursion
+      (goto-char start)
+      (while (re-search-forward dos-regex end t)
+        (put-text-property (match-beginning 0) (match-end 0) 'face '(:foreground "green"))))
+
+
+    (save-excursion
+      (goto-char start)
+      (while (re-search-forward remote-regex end t)
+        (put-text-property (match-beginning 0) (match-end 0) 'face '(:foreground "red"))))
+
+    (save-excursion
+      (goto-char start)
+      (while (re-search-forward rce-regex end t)
+        (put-text-property (match-beginning 0) (match-end 0) 'face '(:foreground "red"))))
+    (save-excursion
+      (goto-char start)
+      (while (re-search-forward local-regex end t)
+        (put-text-property (match-beginning 0) (match-end 0) 'face 'font-lock-function-name-face)))))
+
 
 
 (defun searchsploit--create-result (result)
@@ -110,8 +151,35 @@ Returns an alist."
       (let ((start (point)))
         (insert line)
         (newline)
+        (searchsploit-set-version-face start (point))
+        (searchsploit-set-exploit-type-face start (point))
+
         (add-text-properties start (point) (list 'id id))))
     (forward-line)))
+
+
+(defun searchsploit-get-exploit-id ()
+  "Get the 'id' property under point"
+
+  (get-text-property (point) 'id))
+
+
+(defun searchsploit-yank-id ()
+  "Copy The Exploit ID."
+  (interactive)
+  (kill-new (searchsploit-get-exploit-id)))
+
+
+(defun searchsploit-copy-exploit ()
+  "Copy Exploit to directory."
+  (interactive)
+  (let* ((default-directory (read-directory-name "Enter Path: "))
+         (id (searchsploit-get-exploit-id)))
+
+
+
+    (searchsploit-get-exploit id)))
+    
 
 (defun searchsploit--insert-results (results)
   "Insert the results into the searchsploit buffer."
@@ -121,14 +189,14 @@ Returns an alist."
   "Setup the searchsploit-buffer"
   (let* ((results (searchsploit-search-db searchsploit-input)))
 
-   (with-current-buffer (get-buffer-create searchsploit-buffer)
+    (setq buffer-read-only nil)
+    (erase-buffer)
+    (searchsploit-header)
+    (searchsploit--insert-results results)
 
-     (erase-buffer)
-     (searchsploit-header)
-     (searchsploit--insert-results results)
-     (switch-to-buffer searchsploit-buffer)
+    (goto-char 1))
 
-     (goto-char 1))))
+  (setq buffer-read-only t))
 
 
 
@@ -136,36 +204,46 @@ Returns an alist."
   
 
 
-(defun searchsploit-search ()
+(defun searchsploit--search ()
   "Search the exploit database."
   (interactive)
-  (with-current-buffer (get-buffer-create searchsploit-buffer)
+  (setq searchsploit-input (read-string "Enter search term: "))
 
-    (setq searchsploit-input (read-string "Enter search term: "))
-    (searchsploit-buffer--setup)))
-
+  (searchsploit-buffer--setup))
 
 
-(defvar searchsploit-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map "s" #'searchsploit-search)
-    map))
+
+
 
 (defun searchsploit-mode ()
   "Major mode for searchsploit"
   (interactive)
-  (kill-all-local-variables)
-  (searchsploit-buffer--setup)
-  (use-local-map searchsploit-mode-map)
+
   (setq major-mode 'searchsploit-mode)
   (setq mode-name "SearchSploit")
   (setq buffer-read-only t)
+
+  (use-local-map searchsploit-mode-map)
   (buffer-disable-undo))
 
 (defun searchsploit ()
   "search for exploits from emacs"
   (interactive)
-  (searchsploit-mode))
+  (switch-to-buffer-other-window (get-buffer-create "*searchsploit*"))
+
+  (searchsploit-mode)
+  (setq searchsploit-input "")
+  (searchsploit--search))
+
+
+
+   
+
+
+
+(define-key searchsploit-mode-map "s" #'searchsploit-search)
+(define-key searchsploit-mode-map "c" #'searchsploit-copy-exploit)
+(define-key searchsploit-mode-map "Y" #'searchsploit-yank-id)
 
 
 (provide 'searchsploit)
