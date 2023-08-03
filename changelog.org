@@ -1,4 +1,7 @@
 * Changelog
+** [2023-08-03 Thu 16:19] 0.0.2
+Improved Searchploit interface
+
 ** [2023-06-25 Sun 04:50] 0.0.2
 Add pwncat-cs command that runs in vterm
 

@@ -6,7 +6,7 @@
 ;; Maintainer:  <unseen@flake>
 ;; Created: May 21, 2023
 ;; Modified: May 21, 2023
-;; Version: 0.0.2
+;; Version: 0.0.3
 ;; Keywords: security hacking
 ;; Homepage: https://github.com/unseen/hackmode
 ;; Package-Requires: ((emacs "28.2") (emacs-async "1.97") (f.el "v0.20.0"))
