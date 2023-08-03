@@ -9,7 +9,7 @@
 ;; Version: 0.0.3
 ;; Keywords: security hacking
 ;; Homepage: https://github.com/unseen/hackmode
-;; Package-Requires: ((emacs "28.2") (emacs-async "1.97") (f.el "v0.20.0"))
+;; Package-Requires: ((emacs "28.2") (emacs-async "1.97") (f "v0.20.0"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
