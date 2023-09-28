@@ -9,3 +9,4 @@ other ideas for the mode include a listing of assets and findings. This is a Wor
 Sections
 + [[file:./ops.org][operations]]
 + [[./searchsploit.org][searchsploit]]
++ [[./env.org][Env Vars]]

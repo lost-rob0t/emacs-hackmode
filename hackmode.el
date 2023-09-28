@@ -23,11 +23,6 @@
 (require 'hackmode-loot)
 (require 'searchsploit)
 
-(defun hackmode-send-notification (title message)
-  (call-process (executable-find "dunstify") nil nil nil title message))
-
-
-
 (defvar-local hackmode-lib-hosts ()
   "Lists of known hosts. hosts are loaded from the dir names of the 'hackmode-lib-dir'.")
 
@@ -131,6 +126,13 @@ ones and overrule settings in the other lists."
   (f-full (f-expand (f-join hackmode-dir operation))))
 
 
+(defun hackmode-create-envrc (op-name)
+  "Creates the .envrc for direnv."
+  (let* ((op-path (hackmode-get-operation-path op-name))
+         (envrc-file (f-expand (f-join op-path ".envrc"))))
+    (message "Writing envrc to: %s" envrc-file)
+    (f-write-text (format  "export HACKMODE_PATH=%s; export HACKMODE_OP=%s " op-path op-name) 'utf-8 envrc-file)))
+
 
 (defun hackmode-set-env (op-name)
   "Set env vars for sub shells and scripts."
@@ -156,10 +158,10 @@ ones and overrule settings in the other lists."
   (interactive)
   (let ((name (read-string "Enter Operation Name: ")))
     (if (file-directory-p (hackmode-get-operation-path name))
-     (message (format "operation %s already exists" name))
-     (progn
-       (make-directory (hackmode-get-operation-path name))
-       (message (format "operation %s created" name))))))
+        (message (format "operation %s already exists" name))
+      (progn
+        (make-directory (hackmode-get-operation-path name))
+        (message (format "operation %s created" name))))))
 
 ;; Host relation functions
 
@@ -230,10 +232,10 @@ You can also M-X hackmode-switch-op to switch"
   (interactive)
   (let ((name (read-string "Enter Operation Name: ")))
     (if (file-directory-p (hackmode-lib-get-operation-path name))
-     (message (format "operation %s already exists" name))
-     (progn
-       (make-directory (hackmode-lib-get-operation-path name))
-       (message (format "operation %s created" name))))))
+        (message (format "operation %s already exists" name))
+      (progn
+        (make-directory (hackmode-lib-get-operation-path name))
+        (message (format "operation %s created" name))))))
 
 
 (defun hackmode-goto-operation ()
@@ -263,11 +265,13 @@ You can also M-X hackmode-switch-op to switch"
          (op-path (hackmode-get-operation-path name)))
     (f-copy template op-path)
     (f-symlink op-path default-directory)
-    (f-symlink (f-expand hackmode-tools-dir (f-join op-path "tools/")))
-    (hackmode-switch-op name)
-    (hackmode-goto-operation)))
+    (f-symlink (f-expand hackmode-tools-dir) (f-join op-path "tools/"))
+    (hackmode-create-envrc name)
+    (setq hackmode-operation name)
+    (hackmode-goto-operation)
+    (run-hooks 'hackmode-operation-hook)))
 
-    
+
 
 (defun hackmode-kill-wordlist ()
   "Copy the path of a wordlist to the kill ring"
@@ -306,7 +310,7 @@ It also return the command in string form."
   (let ((buffer (get-buffer-create "(http*")))
     (with-current-buffer (start-process buffer (format "http.server:%s" port) (executable-find "python") "-m" "http.server" port "-d" root)
       (add-hook window-buffer-change-functions #'(lambda () (hackmode-send-notification "HTTP server" "New request!"))))))
- 
+
 
 
 (defun hackmode-stop-http ()
