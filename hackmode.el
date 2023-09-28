@@ -56,6 +56,7 @@
   "List of checklists.")
 
 
+
 ;; Source: https://emacs.stackexchange.com/a/35033
 (defun hackmode-popup (prompt default-index content)
   "Pop up menu
@@ -127,8 +128,14 @@ ones and overrule settings in the other lists."
 ;; Operations and managment functions
 (defun hackmode-get-operation-path (operation)
   "Get the full path for a OPERATION."
-  (f-full (f-join (f-expand hackmode-dir) operation)))
+  (f-full (f-expand (f-join hackmode-dir operation))))
 
+
+
+(defun hackmode-set-env (op-name)
+  "Set env vars for sub shells and scripts."
+  (setenv "HACKMODE_OP" op-name)
+  (setenv "HACKMODE_PATH" (hackmode-get-operation-path op-name)))
 
 (defun hackmode-operations ()
   "Return a list of operations."
@@ -140,6 +147,7 @@ ones and overrule settings in the other lists."
   (let ((op (completing-read "Select operation: " (hackmode-operations))))
     (setq hackmode-operation op)
     (hackmode-init-loot-file op)
+    (hackmode-set-env op)
     (run-hooks 'hackmode-operation-hook)))
 
 ;; TODO move this to hackmode.el
