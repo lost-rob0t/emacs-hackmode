@@ -23,6 +23,11 @@
 (require 'hackmode-loot)
 (require 'searchsploit)
 
+(defun hackmode-send-notification (title message)
+  (call-process (executable-find "dunstify") nil nil nil title message))
+
+
+
 (defvar-local hackmode-lib-hosts ()
   "Lists of known hosts. hosts are loaded from the dir names of the 'hackmode-lib-dir'.")
 
@@ -249,7 +254,11 @@ You can also M-X hackmode-switch-op to switch"
          (name (read-string "Enter Operaton Name: "))
          (op-path (hackmode-get-operation-path name)))
     (f-copy template op-path)
-    (f-symlink op-path default-directory)))
+    (f-symlink op-path default-directory)
+    (f-symlink (f-expand hackmode-tools-dir (f-join op-path "tools/")))
+    (hackmode-switch-op name)
+    (hackmode-goto-operation)))
+
     
 
 (defun hackmode-kill-wordlist ()
@@ -286,7 +295,10 @@ It also return the command in string form."
 
 (defun hackmode-http-server (root port)
   "Http server using python."
-  (start-process "http" (format "http.server:%s" port) (executable-find "python") "-m" "http.server" port "-d" root))
+  (let ((buffer (get-buffer-create "(http*")))
+    (with-current-buffer (start-process buffer (format "http.server:%s" port) (executable-find "python") "-m" "http.server" port "-d" root)
+      (add-hook window-buffer-change-functions #'(lambda () (hackmode-send-notification "HTTP server" "New request!"))))))
+ 
 
 
 (defun hackmode-stop-http ()
@@ -295,6 +307,8 @@ It also return the command in string form."
   (dolist (buffer (buffer-list))
     (when (string-match-p "http" (buffer-name buffer))
       (kill-buffer buffer))))
+
+
 
 
 (defun hackmode-serve-tools ()
