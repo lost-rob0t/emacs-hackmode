@@ -136,6 +136,7 @@ ones and overrule settings in the other lists."
 
 (defun hackmode-set-env (op-name)
   "Set env vars for sub shells and scripts."
+  (setenv "PATH" (concat (getenv "PATH") ":" (f-full (f-expand hackmode-tools-dir))))
   (setenv "HACKMODE_OP" op-name)
   (setenv "HACKMODE_PATH" (hackmode-get-operation-path op-name)))
 
