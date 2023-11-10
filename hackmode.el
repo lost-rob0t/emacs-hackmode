@@ -147,7 +147,7 @@ ones and overrule settings in the other lists."
 (defun hackmode-switch-op ()
   "Switch operation."
   (interactive)
-  (let ((op (completing-read "Select operation: " (hackmode-operations))))
+  (let ((op (completing-read "Select operation: " (hackmode-operations) nil nil)))
     (setq hackmode-operation op)
     (hackmode-init-loot-file op)
     (hackmode-set-env op)

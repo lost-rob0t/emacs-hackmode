@@ -11,6 +11,13 @@ Operations live in your [[help:hackmode-dir][hackmode-dir]], if you create an op
 + You can switch to an operation with [[help:hackmode-switch-op][hackmode-switch-op]].
 + You can go to the directory with [[help:hackmode-goto-operation][hackmode-goto-operation]].
 
+In the event of a large scope target you can always create a =subtarget=.
+To create one just enter the main operation name then a /
+#+begin_example
+default/subdomain.com
+#+end_example
+
+
 ** Vars
 
 + path to where operations are stored [[help:hackmode-dir][hackmode-dir]].
