@@ -2,11 +2,13 @@
 
 
 * README
-Long story short hackmode is a set of scripts to helpo manage and run pentesting engagements. At the core of it is the concept of an operation, which is just a working directory where you work in.
-There  is a complentary hackmode for common lisp, there hasnt been much work in that. Goal with the common lisp version is to enable support of hackmode in lish, nyxt and lem. Maybe i can communicate to that from emacs?
+Long story short hackmode is a set of scripts to help you manage and run pentesting/bug bounty engagements. At the core of it is the concept of an operation, which is just a working directory where you work in.
 other ideas for the mode include a listing of assets and findings. This is a Work in progress package, where stuff is added as i find a use for something.
+
+Also see the [[https://github.com/lost-rob0t/hackmode][complementary common lisp version]].
 
 Sections
 + [[file:./ops.org][operations]]
 + [[./searchsploit.org][searchsploit]]
 + [[./env.org][Env Vars]]
++ [[./checklists.org][Check lists]]

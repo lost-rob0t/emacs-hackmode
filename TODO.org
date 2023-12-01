@@ -1,0 +1,3 @@
+#+title: Todo
+* TODO make checklsists use snippets
+like yassnippet?

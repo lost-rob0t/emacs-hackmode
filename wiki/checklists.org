@@ -1,0 +1,18 @@
+#+title: Checklists
+
+
+* Checklists
+Checklists, methodolgy whatever you want to call it, Its simply a way to discover whathas been done and what needs to be done against a target. they also can used as notes. They are simply another pattern for file templates.
+
+When you use a checklists a org todo file will be created in the base of your [[elisp:(hackmode-get-operation-path hackmode-operation)][current operation]] or at the cwd.
+The target checklists will be under checklists/
+
+** Usage
+Before you can use them you need to set the alist of checklists with paths to template files
+#+begin_src emacs-lisp
+(setq hackmode-checklists '(("domain" . "~/hackmode/checklists/domain.org")
+                            ("ssrf" . "~/hackmode/checklists/ssrf.org")
+                            ("Program Overview" . "~/hackmode/checklists/Bug-bounty.org")))
+#+end_src
+
++ To use a template: [[elisp:(hackmode-use-checklist)][M-x hackmode-use-checklist]]
