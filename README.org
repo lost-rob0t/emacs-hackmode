@@ -23,9 +23,9 @@ Heres interesting stuff so far
 + vterm
 + tools mentioned by function names.
 
-** TODO add stuff [0/6]
-+ [ ] describe vars
-+ [ ] fleshout hackmode-operations
-+ [ ] fleshout checklist
+** TODO add stuff [2/5]
++ [X] describe vars
++ [X] fleshout hackmode-operations
++ [-] fleshout checklist
 + [ ] fleshout hackmode (non emacs) interaction
 + [ ] Display tool output
