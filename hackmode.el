@@ -5,8 +5,8 @@
 ;; Author:  <nsaspy@fedora.email>
 ;; Maintainer:  <nsaspy@fedora.email>
 ;; Created: May 21, 2023
-;; Modified: May 21, 2023
-;; Version: 0.0.4
+;; Modified: Dec 1, 2023
+;; Version: 0.0.5
 ;; Keywords: security hacking
 ;; Homepage: https://github.com/unseen/hackmode
 ;; Package-Requires: ((emacs "28.2") (emacs-async "1.97") (f "v0.20.0"))
@@ -46,11 +46,48 @@
 
 (defcustom hackmode-templates (f-expand "~/.config/hackmode/templates")
   "Path to templates directory.")
+;; Alist of files that should be used.
+;; NOTE i do like the idea of multiple checklists, maybe it could be org headings
+;; or org files for a type of target too
+;; TODO Allow selecting from the loot file
+;; TODO also allow bulk import to the loot file
+;; Expand this It is an alist of (<name> . <filepath>)
+;; The user would be able to interactivly select a target
+;; the command that selects the target should be advisable to let me use any function to select the target
+(defcustom hackmode-checklists nil "Alist of files . name to be used for checklists.")
 
-(defcustom hackmode-checklists 'list
-  "List of checklists.")
+(defun hackmode-read-target ()
+  "read a target"
+  (read-string "Enter a target: "))
+(defvar hackmode-target-select-fn #'hackmode-read-target
+  "The Function that will prompt to select a target. it must return a single string.")
 
 
+(defun hackmode-use-checklist ()
+  "Read a target from the user and copy the checklist file."
+  (interactive)
+  (let* ((target (funcall hackmode-target-select-fn))
+         (dir  (or default-directory (hackmode-get-operation-path  hackmode-operation)))
+         (file-path (cdr (assoc (completing-read "Select a checklist: " hackmode-checklists nil t) hackmode-checklists)))
+         (destination-dir (f-join dir "checklists"))
+         (destination-file (f-join destination-dir (concat target "-checklist.org"))))
+    (unless (f-exists? destination-dir)
+      (f-mkdir destination-dir))
+    (f-copy file-path destination-file)
+    (hackmode-create-todo-entry destination-file)
+    (message "Checklist for %s copied to %s" target destination-file)))
+
+(defun hackmode-create-todo-entry (checklist-file)
+  "Create an entry in the 'check-lists.org' file linking to CHECKLIST-FILE."
+  (let* ((todo-file (f-join default-directory "check-lists.org"))
+         (entry (format "\n* TODO %s\n  [[file:%s]]" (f-filename checklist-file) checklist-file)))
+    (unless (f-exists? todo-file)
+      (f-write-text "" 'utf-8 todo-file))
+    (with-temp-buffer
+      (insert-file-contents todo-file)
+      (goto-char (point-max))
+      (insert entry)
+      (write-region (point-min) (point-max) todo-file))))
 
 ;; Source: https://emacs.stackexchange.com/a/35033
 (defun hackmode-popup (prompt default-index content)
@@ -258,6 +295,15 @@ You can also M-X hackmode-switch-op to switch"
   "Copy a template NAME to DEST"
   (f-copy (f-join hackmode-templates name) dest))
 
+
+(defun hackmode-init-subtarget ()
+  "Create a sub target within hackmode."
+  (interactive)
+  (let ((target (read-string "Enter target: " nil t nil))
+        (setq hackmode-operation (format "%s/%s" hackmode-operation target))
+        (when (not (f-dir? (hackmode-get-operation-path hackmode-operation)))
+          (f-mkdir (f-expand (hackmode-get-operation-path hackmode-operation)))))))
+
 (defun hackmode-init ()
   "Interactivly create a operation."
   (interactive)
@@ -287,8 +333,8 @@ You can also M-X hackmode-switch-op to switch"
 
 
 
-(defun hackmode-create-checklist (name description &rest tasks)
-  (list :name nam :description description :tasks (apply #'list tasks)))
+;; (defun hackmode-create-checklist (name description &rest tasks)
+;;   (list :name nam :description description :tasks (apply #'list tasks)))
 
 
 
@@ -350,6 +396,8 @@ It also return the command in string form."
         (vterm-send-string (format  "pwncat-cs -lp %s && exit" port))
         (vterm-send-return)))
     (switch-to-buffer buffer-name)))
+
+
 
 
 
