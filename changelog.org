@@ -1,4 +1,8 @@
 * Changelog
+** [2023-12-01 Fri 05:00] 0.0.5
+I forgot to update the versions but this is where it is now
++ Added checklists
++ updated docs.
 ** [2023-08-03 Thu 16:19] 0.0.2
 Improved Searchploit interface
 
