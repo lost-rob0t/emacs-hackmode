@@ -56,6 +56,8 @@
 ;; the command that selects the target should be advisable to let me use any function to select the target
 (defcustom hackmode-checklists nil "Alist of files . name to be used for checklists.")
 
+(defcustom hackmode-data-dir (f-expand "~/.local/share/hackmode/") "The directory to be used to hold current hackmode state, you should leave this default!")
+
 (defun hackmode-read-target ()
   "read a target"
   (read-string "Enter a target: "))
@@ -162,6 +164,27 @@ ones and overrule settings in the other lists."
   "Get the full path for a OPERATION."
   (f-full (f-expand (f-join hackmode-dir operation))))
 
+(defun hackmode-create-op-config (operation)
+  "Create the config dirs for hackmode operation and gloabl if not exists."
+  (let ((path (hackmode-get-operation-path operation)))
+    (f-mkdir-full-path hackmode-data-dir)
+    (f-mkdir-full-path (f-join path ".config/"))))
+
+(defun hackmode-get-config-path (op-name)
+  "Get the path to the operation's .config/"
+  (f-join (hackmode-get-operation-path op-name) ".config/"))
+
+(defun hackmode-read-config-file (op-name config-filename)
+  "Read a config for a operation"
+  (with-temp-buffer (insert-file-contents-literally
+                     (f-join (hackmode-get-config-path op-name) filename))
+                    (buffer-string)))
+
+(defun hackmode-write-operation-config (op-name config-filename strings)
+  "Write to the OPERATION's config."
+  (f-write-text strings 'utf-8 (f-join  (hackmode-get-config-path op-name) config-filename)))
+
+
 
 (defun hackmode-create-envrc (op-name)
   "Creates the .envrc for direnv."
@@ -176,6 +199,14 @@ ones and overrule settings in the other lists."
   (setenv "PATH" (concat (getenv "PATH") ":" (f-full (f-expand hackmode-tools-dir))))
   (setenv "HACKMODE_OP" op-name)
   (setenv "HACKMODE_PATH" (hackmode-get-operation-path op-name)))
+
+(defun hackmode-set-metadata (op-name)
+  "create all the needed metadata for hackmode."
+  (hackmode-create-op-config op-name)
+  (f-write-text (hackmode-get-operation-path op-name) 'utf-8 (f-join hackmode-data-dir "op-path"))
+  (f-write-text op-name 'utf-8 (f-join hackmode-data-dir "current-op"))
+  (hackmode-set-env op-name)
+  (hackmode-create-envrc op-name))
 
 (defun hackmode-operations ()
   "Return a list of operations."
@@ -303,6 +334,14 @@ You can also M-X hackmode-switch-op to switch"
         (setq hackmode-operation (format "%s/%s" hackmode-operation target))
         (when (not (f-dir? (hackmode-get-operation-path hackmode-operation)))
           (f-mkdir (f-expand (hackmode-get-operation-path hackmode-operation)))))))
+
+
+
+(defun hackmode-init-metadata (operation-name)
+  "Write the hackmode metadata to ~/.local/share/hackmode/."
+  (let ((path (hackmode-get-operation-path operation-name)))
+    (f-write-text path 'utf-8)))
+
 
 (defun hackmode-init ()
   "Interactivly create a operation."
