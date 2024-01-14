@@ -1,0 +1,98 @@
+#+title: System Config
+
+* Hackmode system config
+Hackmode tooling interacts with the system by the use of $ENV vars or writing to a certain known path.
+
+** Operations
+*** env
+**** HACKMODE_OP :env:
+this the name of current hackmode operation.
+**** HACKMODE_PATH :env:
+this is the full path to the current hackmode operations's path
+
+*** files
+Most config files are in =$HACKMODE_PATH/.config/= or if its a global setting =$HOME/.local/share/hackmode/=
+
+all below here is assumed to be in =~/.local/share/hackmode/=
+**** current operation
+same as HACKMODE_OP, file containing the current operation.
+
+=current-op=
+**** current path to operation
+same as HACKMODE_PATH
+=op-path=
+
+
+** Current Operation
+*** file
+**** user ids
+if you have a user id for a bug bounty or thing you are testing you can put a list of user ids, one per line in =$HACKMODE_PATH/.config/user-ids=.
+these can be used to grep over http responses
+
+* Examples
+** python
+Here is example python to interact with current hackmode state
+#+begin_src python :tangle example.py :results output replace
+#!/usr/bin/env python3
+
+import os
+
+def get_hackmode_operation_env():
+    return os.getenv("HACKMODE_OP")
+
+def get_hackmode_operation_path_env():
+    return os.getenv("HACKMODE_PATH")
+
+
+def get_hackmode_files_path(global_setting=False):
+    if global_setting:
+        return os.path.expanduser("~/.local/share/hackmode/")
+    else:
+        return os.path.join(os.getenv("HACKMODE_PATH"), ".config/")
+
+
+def get_current_operation_file_path():
+    return os.path.join(get_hackmode_files_path(), "current-op")
+
+
+def get_current_path_to_operation_file_path():
+    return os.path.join(get_hackmode_files_path(), "op-path")
+
+
+def get_user_ids_file_path():
+    return os.path.join(get_hackmode_files_path(), ".config/user-ids")
+
+
+def read_user_ids():
+    user_ids_file_path = get_user_ids_file_path()
+    if os.path.exists(user_ids_file_path):
+        with open(user_ids_file_path, "r") as file:
+            return file.read().splitlines()
+    else:
+        return []
+
+
+# Example usage:
+operation_env = get_hackmode_operation_env()
+operation_path_env = get_hackmode_operation_path_env()
+files_path = get_hackmode_files_path()
+current_operation_file_path = get_current_operation_file_path()
+current_path_to_operation_file_path = get_current_path_to_operation_file_path()
+user_ids = read_user_ids()
+
+# Print the values for demonstration
+print(f"Hackmode Operation: {operation_env}")
+print(f"Hackmode Operation Path: {operation_path_env}")
+print(f"Hackmode Files Path: {files_path}")
+print(f"Current Operation File Path: {current_operation_file_path}")
+print(f"Current Path to Operation File Path: {current_path_to_operation_file_path}")
+print(f"User IDs: {user_ids}")
+#+end_src
+
+#+RESULTS:
+: Hackmode Operation: Monitored
+: Hackmode Operation Path: /home/unseen/Documents/hackmode/Monitored/
+: Hackmode Files Path: /home/unseen/Documents/hackmode/Monitored/.config/
+: Current Operation File Path: /home/unseen/Documents/hackmode/Monitored/.config/current-op
+: Current Path to Operation File Path: /home/unseen/Documents/hackmode/Monitored/.config/op-path
+: User IDs: []

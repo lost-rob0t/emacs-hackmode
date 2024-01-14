@@ -6,7 +6,7 @@
 ;; Maintainer:  <nsaspy@fedora.email>
 ;; Created: May 21, 2023
 ;; Modified: Dec 1, 2023
-;; Version: 0.0.5
+;; Version: 0.0.6
 ;; Keywords: security hacking
 ;; Homepage: https://github.com/unseen/hackmode
 ;; Package-Requires: ((emacs "28.2") (emacs-async "1.97") (f "v0.20.0"))
