@@ -54,7 +54,7 @@
 
 
 (defun hackmode-capture ()
-  "Create a report for the day."
+  "Capture a thought/data before it is lost to entropy."
   (interactive)
   (let* ((default-directory (hackmode-get-operation-path hackmode-operation))
          (org-directory default-directory)
