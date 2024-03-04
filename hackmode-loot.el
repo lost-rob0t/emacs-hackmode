@@ -20,149 +20,54 @@
 ;;; Code:
 
 (require 'f)
-(defun hackmode-get-loot-file (name)
-  "return the path to the lootfile in the operation path."
-  (f-join (hackmode-get-operation-path name) ".loot.lisp"))
-
-(defvar hackmode-loot (list (cons 'creds nil) (cons 'urls nil) (cons 'emails nil))
-  "The list of loot that has been in found. includes loot from other operations.")
-
-(defun hackmode-init-loot-file (name)
-  "Create The loot file if it does not exist"
-  (if (f-exists-p (hackmode-get-loot-file name))
-      nil
-    (progn
-      (f-touch (hackmode-get-loot-file name))
-      (hackmode-save-loot-data))))
+(require 'elfeed)
+(require 'elfeed-org)
 
 
-(defun hackmode-save-loot-data ()
-  "Save loot to 'hackmode-loot-file'"
+(setq hackmode-capture-templates '(("d" "default" entry (file+headline "operation.org" "ScratchPad") "* %<%Y>\n** %<%m %B>\n*** %<%d %A>\n %?" :clock-keep :clock-in)
+                                   ("l" "loot")
+                                   ("lu" "Capture a a user" entry (file+olp "operation.org" "Loot" "Users") "*** %T\n %^{username}p %^{password}p\n**** Notes\n %?")
+                                   ("li" "Capture a a ip/host" entry (file+olp "operation.org" "Loot" "Hosts") "*** %T\n %^{hostname}p %?")
+                                   ("lu" "program url" entry (file+headline "operation.org" "Loot" "URL") "** IDEA %^g %^{url}\n %^{server}p\n %^{alive}")
+                                   ("lt" "program tech " entry (file+olp "operation.org" "Loot" "Tech") "** %T %^{url} %^{tech-name} " :kill-buffer t)
+                                   ("r" "reports")
+                                   ("rd" "Generate a report for the day." entry (file+headline "operation.org" "reports") "** %T\n %(hackmode-loot-capture-metadata) %?")
+                                   ("rb" "Generate a report for a bug." entry (file+headline "operation.org" "bugs") "** %T\n %^{bug-type}p\n%^{cvss-score}p\n*** description\n %?\n*** steps to reproduce %i")
+                                   ("p" "programs")
+                                   ("pr" "Program Rss" entry (file+headline "operation.org" "RSS") "** %^{rss url} :elfeed: %^g")
+                                   ("pn" "program notes" entry (file+headline "operation.org" "notes") "** %T\n %x")
+                                   ("pt" "program todos" entry (file+headline "operation.org" "Todo Inbox") "** TODO %? ")
+                                   ("ps" "program script" entry (file+headline "operation.org" "Automation") "** %T %^g\n #+NAME:%(read-string \"Enter name of Script\")\n#+BEGIN_SRC sh :async :results output replace :tangle attack.sh\n%x\n#+END_SRC\n%?")))
+
+(defun hackmode-loot-capture-metadata ()
+  "Return a string full of org properties for the hackmode-capture."
+  (let* ((default-directory (hackmode-get-operation-path hackmode-operation))
+         (findings-directory (f-join default-directory "findings/"))
+         (org-directory findings-directory)
+         (report-file (f-join findings-directory "findings.org"))
+         ;; NOTE you need to ensure this file is up to date.
+         (total-urls (shell-command-to-string (format "wc -l %s | cut -d ' ' -f 1" (f-join findings-directory "urls.txt"))))
+         (total-subdomains (shell-command-to-string (format "wc -l %s | cut -d ' ' -f 1" (f-join findings-directory "subdomains.txt")))))
+
+    (format ":PROPERTIES:\n:sub-domains: %s\n:urls: %s\n:END:\n#+BEGIN_EXAMPLE\n%s\n#+END_EXAMPLE" total-subdomains total-urls (shell-command-to-string (format  "git diff --staged %s" "findings/subdomains.txt")))))
+
+
+
+(defun hackmode-capture ()
+  "Create a report for the day."
   (interactive)
-  (with-temp-file (hackmode-get-loot-file hackmode-operation)
-    (prin1 hackmode-loot (current-buffer))))
+  (let* ((default-directory (hackmode-get-operation-path hackmode-operation))
+         (org-directory default-directory)
+         ;; NOTE you need to ensure this file is up to date.
+         (org-capture-templates hackmode-capture-templates))
+    (call-interactively #'org-capture)))
 
-(defun hackmode-load-loot-data ()
-  "Read an S-expression from the loot file."
+(defun hackmode-rss ()
+  "View The rss feeds saved in $HACKMODE_PATH/rss.org."
   (interactive)
-  (with-temp-buffer
-    (insert-file-contents (hackmode-get-loot-file hackmode-operation))
-    (setq hackmode-loot (car (read-from-string (buffer-string))))))
-
-
-
-(defun hackmode-loot-format-data (key value &optional note)
-  "Format a loot VALUE to be saved as KEY in loot file. NOTE is optional."
-  (list key (list :note note :value value)))
-
-(defun hackmode-loot-get-topic-keys (topic)
-  "Return all keys for given loot TOPIC."
-  (mapcar #'car  (cdr (assoc topic hackmode-loot))))
-
-(defun hackmode-loot-get-key (topic key)
-  (assoc key  (cdr (assoc topic hackmode-loot))))
-
-
- 
-
-(defun hackmode-insert-loot (topic key value &optional note)
-  "Insert a piece of loot if it does not exist already."
-  (cl-pushnew (hackmode-loot-format-data key value note) (alist-get topic hackmode-loot))
-  (hackmode-save-loot-data))
-;; TODO Fix this
-(defun hackmode-loot-update (topic key value &optional note)
-  "Update loot under TOPIC with new VALUE"
-  (let* ((topics (copy-alist (alist-get topic hackmode-loot)))
-         (keys (assoc-delete-all key topics)))
-    (push (hackmode-loot-format-data key value) topics)
-    (assoc-delete-all topic hackmode-loot)
-    (push (cons topic topics) hackmode-loot)
-    (hackmode-save-loot-data)))
-
-
-
-
-;; https://www.reddit.com/r/emacs/comments/10xhvd8/comment/j7tqsgn
-(defun hackmode-loot-read-note ()
-  "Read a note."
-  (let ((delta 20))
-    (window-resize (minibuffer-window) delta)
-    (read-string "Note: ")))
-
-(defun hackmode-loot-save-password ()
-  "Save a credential to the loot file."
-  (interactive)
-  (let* ((data (split-string (current-kill 0) ":"))
-         (user (read-string "Enter User: " (if (> (length data) 1) (nth 0 data))))
-         (password (read-string "Enter password: " (if (> (length data) 1) (nth 1 data))))
-         (note  (if (yes-or-no-p "Enter a note?" ) (hackmode-loot-read-note) "")))
-    (hackmode-insert-loot 'creds user password note)))
-
-
-
-
-(defun hackmode-loot-save-url ()
-  "Save a url to the loot file."
-  (interactive)
-  (let* ((data (current-kill 0))
-         (url (read-string "Enter url to save: " (if (org-url-p data) data)))
-
-         (note  (if (yes-or-no-p "Enter a note?: " ) (hackmode-loot-read-note) "")))
-    (hackmode-insert-loot 'urls url nil note)))
-
-(defun hackmode-loot-save-email ()
-  "Save a url to the loot file."
-  (interactive)
-  (let* ((data (current-kill 0))
-         (email (read-string "Enter Email to save: " (if (not (null data)) data)))
-
-         (note  (if (yes-or-no-p "Enter a note?: " ) (hackmode-loot-read-note) "")))
-    (hackmode-insert-loot 'emails email nil note)))
-
-
-
-
-(defun hackmode-loot-save-user ()
-  "Save a url to the loot file."
-  (interactive)
-  (let* ((data (current-kill 0))
-         (user (read-string "Enter Email to save: " (if (not (null data)) data)))
-
-         (note  (if (yes-or-no-p "Enter a note?: " ) (hackmode-loot-read-note) "")))
-    (hackmode-insert-loot 'users user nil note)))
-
-
-
-
-
-(defun hackmode-loot-save-host ()
-  "Save a host to the loot file."
-  (interactive)
-  (let ((addr (read-string "Enter host address: " (current-kill 0)))
-
-        (note  (if (yes-or-no-p "Enter a note?: " ) (hackmode-loot-read-note) "")))
-    (hackmode-insert-loot 'hosts addr nil note)))
-
-
-(defun hackmode-loot-save-port ()
-  (interactive)
-  (let ((addr (completing-read "Select Host: " (hackmode-get-topic-keys)))
-        (port (read-string "Port Number: " "80")))
-    (hackmode-insert-loot 'hosts)))
-
-(defcustom hackmode-loot-menu '(("Credential" . hackmode-loot-save-password)
-                                ("url" . hackmode-loot-save-url)
-                                ("host" . hackmode-loot-save-host)
-                                ("post" . hackmode-loot-save-port)
-                                ("post" . hackmode-loot-save-user)
-                                ("email" . hackmode-loot-save-email))
-  "Alist of things to save to the loot file. The the menu values must be functions.")
-
-(defun hackmode-save-loot ()
-  "Save a piece of loot."
-  (interactive)
-  (hackmode-popup "Capture: " 0 hackmode-loot-menu))
-
+  (let ((rmh-elfeed-org-files (list (f-join (hackmode-get-operation-path hackmode-operation) "rss.org"))))
+    (elfeed-update)
+    (elfeed)))
 
 
 (provide 'hackmode-loot)

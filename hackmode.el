@@ -6,7 +6,7 @@
 ;; Maintainer:  <nsaspy@fedora.email>
 ;; Created: May 21, 2023
 ;; Modified: Dec 1, 2023
-;; Version: 0.0.6
+;; Version: 0.0.7
 ;; Keywords: security hacking
 ;; Homepage: https://github.com/unseen/hackmode
 ;; Package-Requires: ((emacs "28.2") (emacs-async "1.97") (f "v0.20.0"))
@@ -166,9 +166,19 @@ ones and overrule settings in the other lists."
 
 (defun hackmode-create-op-config (operation)
   "Create the config dirs for hackmode operation and gloabl if not exists."
-  (let ((path (hackmode-get-operation-path operation)))
+  (let* ((path (hackmode-get-operation-path operation))
+         (default-directory path))
     (f-mkdir-full-path hackmode-data-dir)
-    (f-mkdir-full-path (f-join path ".config/"))))
+    (f-mkdir-full-path (f-join path ".config/"))
+    (f-mkdir-full-path (f-join path "findings/"))
+    (f-touch (f-join path "findings/" "subdomains.txt"))
+    (f-touch (f-join path "findings/" "urls.txt"))
+    (f-touch (f-join path "findings/" "apex.txt"))
+    (shell-command-to-string (format "git init %s" path))
+    (shell-command-to-string (format "git add %s" (f-join path "findings/")))
+    (shell-command-to-string "git commit -m \"Added Files\"")))
+
+
 
 (defun hackmode-get-config-path (op-name)
   "Get the path to the operation's .config/"
@@ -218,7 +228,7 @@ ones and overrule settings in the other lists."
   (let ((op (completing-read "Select operation: " (hackmode-operations) nil nil)))
     (setq hackmode-operation op)
     (hackmode-init-loot-file op)
-    (hackmode-set-env op)
+    (hackmode-set-metadata op)
     (run-hooks 'hackmode-operation-hook)))
 
 ;; TODO move this to hackmode.el

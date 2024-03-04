@@ -25,9 +25,12 @@ same as HACKMODE_PATH
 
 ** Current Operation
 *** file
-**** user ids
+**** userids
 if you have a user id for a bug bounty or thing you are testing you can put a list of user ids, one per line in =$HACKMODE_PATH/.config/user-ids=.
 these can be used to grep over http responses
+
++ filename: userids
+
 
 * Examples
 ** python
@@ -60,7 +63,7 @@ def get_current_path_to_operation_file_path():
 
 
 def get_user_ids_file_path():
-    return os.path.join(get_hackmode_files_path(), ".config/user-ids")
+    return os.path.join(get_hackmode_files_path(), ".config/userids")
 
 
 def read_user_ids():
