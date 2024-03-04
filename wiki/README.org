@@ -9,6 +9,7 @@ Also see the [[https://github.com/lost-rob0t/hackmode][complementary common lisp
 
 Sections
 + [[file:./ops.org][operations]]
++ [[file:capture.org]]
 + [[./searchsploit.org][searchsploit]]
 + [[./env.org][Env Vars]]
 + [[./checklists.org][Check lists]]

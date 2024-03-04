@@ -1,0 +1,9 @@
+#+title: Hackmode Capture
+
+* Hackmode Capture
+help:hackmode-capture is a simple wrapper around help:org-capture.
+Set help:hackmode-capture-templates to add your own templates.
+
+The default file is operations.org. The templates make use of org properties to make org tables with it.
+
+A good use for this is to use the scripts capture to slowly repast your bash commands into a recon script in a litterate manner in org, then tangle the whole file to a script.
