@@ -6,7 +6,7 @@
 ;; Maintainer:  <nsaspy@fedora.email>
 ;; Created: May 21, 2023
 ;; Modified: Dec 1, 2023
-;; Version: 0.0.7
+;; Version: 0.0.8
 ;; Keywords: security hacking
 ;; Homepage: https://github.com/unseen/hackmode
 ;; Package-Requires: ((emacs "28.2") (emacs-async "1.97") (f "v0.20.0"))
@@ -227,7 +227,6 @@ ones and overrule settings in the other lists."
   (interactive)
   (let ((op (completing-read "Select operation: " (hackmode-operations) nil nil)))
     (setq hackmode-operation op)
-    (hackmode-init-loot-file op)
     (hackmode-set-metadata op)
     (run-hooks 'hackmode-operation-hook)))
 
@@ -256,10 +255,7 @@ ones and overrule settings in the other lists."
 
 
 
-(defvar hackmode-focus-target "No Target"
-  "Current host")
-(defvar hackmode-focus-mode "host"
-  "type of target we are looking at")
+
 
 (defvar hackmode-new-host-hook nil
   "hook to run when adding a new host")
@@ -279,32 +275,7 @@ You can also M-X hackmode-switch-op to switch"
   :type 'string)
 
 
-(defun hackmode-focus ()
-  "Interactively set the target in focus."
-  (interactive)
-  (let* ((type (completing-read "Type: " (mapcar #'car hackmode-loot)))
-         (target (completing-read "Target: " (mapcar #'car (cdr (assoc type hackmode-loot))))))
 
-
-    (setq hackmode-focus-target target)
-    (setq hackmode-focus-mode type)))
-
-
-(defun hackmode-mode-line ()
-  "Set the hackmode-mode-line"
-  (interactive)
-  (let ((hackmode-line
-         (format "%s %s %s" hackmode-operation hackmode-focus-target hackmode-focus-mode)))
-
-
-
-    (setq global-mode-string
-          (cond ((consp global-mode-string)
-                 (add-to-list 'global-mode-string hackmodemode-line 'APPEND))
-                ((not global-mode-string)
-                 (list hackmode-line))
-                ((stringp global-mode-string)
-                 (list global-mode-string hackmode-line))))))
 
 (defun hackmode-new-operation ()
   "Create a new operation to group tasks"
@@ -451,9 +422,7 @@ It also return the command in string form."
 
 
 ;; Add hooks area
-(add-hook 'hackmkde-operation-hook #'(lambda () (setq hackmode-loot nil)))
 (add-hook 'hackmode-operation-hook #'hackmode-goto-operation)
-(add-hook 'hackmode-operation-hook #'hackmode-load-loot-data)
 
 (provide 'hackmode)
 ;;; hackmode.el ends here
