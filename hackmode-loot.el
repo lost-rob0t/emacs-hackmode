@@ -24,32 +24,17 @@
 (require 'elfeed-org)
 
 
-(setq hackmode-capture-templates '(("d" "default" entry (file+headline "operation.org" "ScratchPad") "* %<%Y>\n** %<%m %B>\n*** %<%d %A>\n %?" :clock-keep :clock-in)
+(setq hackmode-capture-templates '(("d" "default" entry (file+olp+datetree "scratchpad.org" "ScratchPad") "* %<%Y>\n** %<%m %B>\n*** %<%d %A>\n %?" :clock-keep :clock-in :jump-to-captured)
                                    ("l" "loot")
-                                   ("lu" "Capture a a user" entry (file+olp "operation.org" "Loot" "Users") "*** %T\n %^{username}p %^{password}p\n**** Notes\n %?")
-                                   ("li" "Capture a a ip/host" entry (file+olp "operation.org" "Loot" "Hosts") "*** %T\n %^{hostname}p %?")
-                                   ("lu" "program url" entry (file+headline "operation.org" "Loot" "URL") "** IDEA %^g %^{url}\n %^{server}p\n %^{alive}")
-                                   ("lt" "program tech " entry (file+olp "operation.org" "Loot" "Tech") "** %T %^{url} %^{tech-name} " :kill-buffer t)
+                                   ("lu" "Capture a a user" entry (file+olp "loot.org" "Loot" "Users") "*** %T\n %^{username}p %^{password}p\n**** Notes\n %?")
+                                   ("lt" "program tech " entry (file+olp "tech.org" "Loot" "Tech") "** %T %^{url} %^{tech-name} " :kill-buffer t)
                                    ("r" "reports")
-                                   ("rd" "Generate a report for the day." entry (file+headline "operation.org" "reports") "** %T\n %(hackmode-loot-capture-metadata) %?")
-                                   ("rb" "Generate a report for a bug." entry (file+headline "operation.org" "bugs") "** %T\n %^{bug-type}p\n%^{cvss-score}p\n*** description\n %?\n*** steps to reproduce %i")
-                                   ("p" "programs")
-                                   ("pr" "Program Rss" entry (file+headline "operation.org" "RSS") "** %^{rss url} :elfeed: %^g")
-                                   ("pn" "program notes" entry (file+headline "operation.org" "notes") "** %T\n %x")
-                                   ("pt" "program todos" entry (file+headline "operation.org" "Todo Inbox") "** TODO %? ")
-                                   ("ps" "program script" entry (file+headline "operation.org" "Automation") "** %T %^g\n #+NAME:%(read-string \"Enter name of Script\")\n#+BEGIN_SRC sh :async :results output replace :tangle attack.sh\n%x\n#+END_SRC\n%?")))
-
-(defun hackmode-loot-capture-metadata ()
-  "Return a string full of org properties for the hackmode-capture."
-  (let* ((default-directory (hackmode-get-operation-path hackmode-operation))
-         (findings-directory (f-join default-directory "findings/"))
-         (org-directory findings-directory)
-         (report-file (f-join findings-directory "findings.org"))
-         ;; NOTE you need to ensure this file is up to date.
-         (total-urls (shell-command-to-string (format "wc -l %s | cut -d ' ' -f 1" (f-join findings-directory "urls.txt"))))
-         (total-subdomains (shell-command-to-string (format "wc -l %s | cut -d ' ' -f 1" (f-join findings-directory "subdomains.txt")))))
-
-    (format ":PROPERTIES:\n:sub-domains: %s\n:urls: %s\n:END:\n#+BEGIN_EXAMPLE\n%s\n#+END_EXAMPLE" total-subdomains total-urls (shell-command-to-string (format  "git diff --staged %s" "findings/subdomains.txt")))))
+                                   ("rd" "Generate a report for the day." entry (file+headline "reports.org" "reports") "** %T\n %(hackmode-loot-capture-metadata) %?")
+                                   ("rb" "Generate a report for a bug." entry (file+headline "reports.org" "bugs") "** %T\n %^{bug-type}p\n%^{cvss-score}p\n*** description\n %?\n*** steps to reproduce %i")
+                                   ("pr" "Program Rss" entry (file+headline "rss.org" "RSS") "* %^{rss url} :elfeed: %^g")
+                                   ("pn" "program notes" entry (file+headline "notes.org" "notes") "** %T\n %x")
+                                   ("pt" "program todos" entry (file+headline "todos.org" "Todo Inbox") "** TODO %? ")
+                                   ("ps" "program script" entry (file+headline "tasks.org" "Automation") "** %T %^g\n #+NAME:%(read-string \"Enter name of Script\")\n#+BEGIN_SRC sh :async :results output replace :tangle attack.sh\n%x\n#+END_SRC\n%?")))
 
 
 
