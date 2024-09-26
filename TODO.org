@@ -1,3 +1,5 @@
 #+title: Todo
-* TODO make checklsists use snippets
-like yassnippet?
+* TODO make more snippets
+* TODO Use a certail file for listing out all operations, so TRAMP can be supported
+Currently the dumb way i do things is throw all the ops into a dir, in reality it would be simpler to just read and write a A-list/plist or even a sqlite database.
+UIt would be nice to use a remote host uinstead of the local vm.
