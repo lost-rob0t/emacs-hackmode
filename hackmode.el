@@ -23,9 +23,6 @@
 (require 'hackmode-loot)
 (require 'searchsploit)
 
-(defvar-local hackmode-lib-hosts ()
-  "Lists of known hosts. hosts are loaded from the dir names of the 'hackmode-lib-dir'.")
-
 
 (defvar hackmode-dir "~/hackmode")
 (defvar hackmode-default-operation "default"
@@ -35,7 +32,9 @@
   "Hook for when operation is changed")
 
 (defcustom hackmode-tools-dir (f-join hackmode-dir "hackmode-tools/")
-  "The Default path where tools to be uploaded will be pulled from.")
+  "The Default path where tools to be uploaded will be pulled from."
+  :group 'hackmode
+  :type 'string)
 
 
 (defvar hackmode-operation hackmode-default-operation
@@ -44,8 +43,11 @@
 (defcustom hackmode-interface "tun0"
   "Network interface to use by default")
 
+;;;TODO Suggest skeltor templates maybe?
 (defcustom hackmode-templates (f-expand "~/.config/hackmode/templates")
   "Path to templates directory.")
+
+
 ;; Alist of files that should be used.
 ;; NOTE i do like the idea of multiple checklists, maybe it could be org headings
 ;; or org files for a type of target too
@@ -58,9 +60,12 @@
 
 (defcustom hackmode-data-dir (f-expand "~/.local/share/hackmode/") "The directory to be used to hold current hackmode state, you should leave this default!")
 
+
 (defun hackmode-read-target ()
   "read a target"
   (read-string "Enter a target: "))
+
+
 (defvar hackmode-target-select-fn #'hackmode-read-target
   "The Function that will prompt to select a target. it must return a single string.")
 
@@ -241,24 +246,8 @@ ones and overrule settings in the other lists."
         (make-directory (hackmode-get-operation-path name))
         (message (format "operation %s created" name))))))
 
-;; Host relation functions
-
-(defun hackmode-get-host-path (operation host)
-  "Get the full path to the HOST for the OPERATION."
-  (f-full (f-join (hackmode-get-operation-path operation) host)))
-
-(defun hackmode-init-host (operation host)
-  "Create the HOST directory for OPERATION"
-  (unless (f-exists-p (hackmode-get-host-path operation host))
-    (f-mkdir-full-path (hackmode-get-host-path operation host))))
 
 
-
-
-
-
-(defvar hackmode-new-host-hook nil
-  "hook to run when adding a new host")
 ;; TODO write the script
 (defcustom hackmode-hook nil
   "hook run when entering hackmode"
@@ -296,12 +285,10 @@ You can also M-X hackmode-switch-op to switch"
 
 ;; QOL Stuff
 (defvar hackmode-wordlist-dir "~/wordlists/")
-(defun hackmode-add-host ()
+(defun hackmode-add-host (hostname address)
   "Add a Host to /etc/hosts"
-  (interactive)
-  (let ((hostname (read-string "Enter Host name: "))
-        (ip (read-string "Enter IP: ")))
-    (append-to-file (format "%s\t%s\n" ip hostname) nil "/sudo::/etc/hosts")))
+  (interactive "sEnter hostname: \nEnter IP: ")
+  (append-to-file (format "%s\t%s\n" address hostname) nil "/sudo::/etc/hosts"))
 
 (defun hackmode-copy (name dest)
   "Copy a template NAME to DEST"
@@ -323,7 +310,6 @@ You can also M-X hackmode-switch-op to switch"
   (let ((path (hackmode-get-operation-path operation-name)))
     (f-write-text path 'utf-8)))
 
-
 (defun hackmode-init ()
   "Interactivly create a operation."
   (interactive)
@@ -333,6 +319,7 @@ You can also M-X hackmode-switch-op to switch"
     (f-copy template op-path)
     (f-symlink op-path default-directory)
     (f-symlink (f-expand hackmode-tools-dir) (f-join op-path "tools/"))
+    ;; TODO Move this stuff to a function
     (hackmode-create-envrc name)
     (setq hackmode-operation name)
     (hackmode-goto-operation)
@@ -374,9 +361,9 @@ It also return the command in string form."
 
 (defun hackmode-http-server (root port)
   "Http server using python."
-  (let ((buffer (get-buffer-create "(http*")))
+  (let ((buffer (get-buffer-create "*http*")))
     (with-current-buffer (start-process buffer (format "http.server:%s" port) (executable-find "python") "-m" "http.server" port "-d" root)
-      (add-hook window-buffer-change-functions #'(lambda () (hackmode-send-notification "HTTP server" "New request!"))))))
+      (add-hook window-buffer-change-functions #'(lambda () (alert "New request from http server" :title "*hackmode-http-serv*"))))))
 
 
 
