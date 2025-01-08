@@ -97,11 +97,7 @@
     (f-mkdir-full-path (f-join path "findings/"))
     (f-touch (f-join path "findings/" ".keep"))
     ;;  you can use either file
-
-    (shell-command-to-string (format "git init %s" path))
-    (shell-command-to-string (format "git add %s" (f-join path "findings/")))
-    (shell-command-to-string "git commit -m \"Added Files\"")))
-
+    ))
 
 (defun hackmode-get-finds-path (op-name)
   "Get the path to the operation's .config/"
