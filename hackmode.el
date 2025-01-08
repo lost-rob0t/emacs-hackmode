@@ -83,34 +83,6 @@
 
 
 
-(defun get-interface-ip (interface)
-  "Get the IP address of a network interface."
-  (let ((output (shell-command-to-string (concat "ip addr show dev " interface " | grep 'inet '"))))
-    (when (string-match "\\([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\\)" output)
-      (match-string 1 output))))
-
-(defun get-iterfaces ()
-  "Get a list of network interface names."
-  (let ((output (shell-command-to-string "ip addr show | awk '/^[0-9]+:/ {gsub(/:/,\"\"); print $2}'")))
-    (split-string output "\n" t)))
-
-
-
-;;from org mode
-(defun hackmode-combine-plists (&rest plists)
-  "Create a single property list from all plists in PLISTS.
-The process starts by copying the first list, and then setting properties
-from the other lists.  Settings in the last list are the most significant
-ones and overrule settings in the other lists."
-  (let ((rtn (copy-sequence (pop plists)))
-        p v ls)
-    (while plists
-      (setq ls (pop plists))
-      (while ls
-        (setq p (pop ls) v (pop ls))
-        (setq rtn (plist-put rtn p v))))
-    rtn))
-
 ;; Operations and managment functions
 (defun hackmode-get-operation-path (operation)
   "Get the full path for a OPERATION."
@@ -124,10 +96,8 @@ ones and overrule settings in the other lists."
     (f-mkdir-full-path (f-join path ".config/"))
     (f-mkdir-full-path (f-join path "findings/"))
     (f-touch (f-join path "findings/" ".keep"))
-    (f-touch (f-join path ".config/" "targets.txt"))
     ;;  you can use either file
-    (f-symlink (f-join path ".config/" "targets.txt")
-               (f-join path ".config/" "targets"))
+
     (shell-command-to-string (format "git init %s" path))
     (shell-command-to-string (format "git add %s" (f-join path "findings/")))
     (shell-command-to-string "git commit -m \"Added Files\"")))
@@ -235,7 +205,20 @@ You can also M-X hackmode-switch-op to switch"
   (find-file (hackmode-get-operation-path hackmode-operation)))
 
 
-;; QOL Stuff
+
+;;; Utils
+(defun hackmode--get-interface-ip (interface)
+  "Get the IP address of a network interface."
+  (let ((output (shell-command-to-string (concat "ip addr show dev " interface " | grep 'inet '"))))
+    (when (string-match "\\([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\\)" output)
+      (match-string 1 output))))
+
+(defun hackmode--get-interfaces ()
+  "Get a list of network interface names."
+  (let ((output (shell-command-to-string "ip addr show | awk '/^[0-9]+:/ {gsub(/:/,\"\"); print $2}'")))
+    (split-string output "\n" t)))
+
+
 (defvar hackmode-wordlist-dir "~/wordlists/")
 (defun hackmode-add-host (hostname address)
   "Add a Host to /etc/hosts"
@@ -285,20 +268,19 @@ You can also M-X hackmode-switch-op to switch"
 
 ;; TODO Move this to a yasnippet
 (defun hackmode-insert-wordlist ()
-  "Copy the path of a wordlist to the kill ring"
+  "Copy the path of a wordlist to the kill ring."
   (interactive)
   (insert (f-expand (read-file-name "Select Wordlist: " (f-expand hackmode-wordlist-dir)))))
 
 
 
 
-(defun hackmode-kill-upload ()
-  "Copy a wget or curl command to your kill ring.
-It also return the command in string form."
+(defun hackmode-upload-file ()
+  "Copy a wget or curl command that can be used to upload a file."
   (interactive)
   (let* ((filename (f-relative (read-file-name "Tool to download: " hackmode-tools-dir "linpeas.sh") hackmode-tools-dir))
-         (i-name (completing-read "interface: " (get-iterfaces)))
-         (ip (get-interface-ip i-name))
+         (i-name (completing-read "interface: " (hackmode--get-interfaces)))
+         (ip (hackmode--get-interface-ip i-name))
          (port (read-string "port: " "8000"))
          (download-cmd (read-string "Cmd to use to download: " "wget"))
          (cmd (format "%s http://%s:%s/%s" download-cmd ip port filename)))
@@ -307,7 +289,7 @@ It also return the command in string form."
     cmd))
 
 (defun hackmode-http-server (root port)
-  "Http server using python."
+  "Http server using python with dir listing on ROOT and listening on PORT."
   (let ((buffer (get-buffer-create "*http*")))
     (with-current-buffer (start-process buffer (format "http.server:%s" port) (executable-find "python") "-m" "http.server" port "-d" root)
       (add-hook window-buffer-change-functions #'(lambda () (alert "New request from http server" :title "*hackmode-http-serv*"))))))
@@ -323,7 +305,6 @@ It also return the command in string form."
 
 
 
-
 (defun hackmode-serve-tools ()
   "Serve the hackmode tools dir."
   (interactive)
@@ -334,11 +315,9 @@ It also return the command in string form."
 ;;;Hackmode
 (transient-define-prefix hackmode-menu ()
   [["Operations"
-    ("c" "Create Operation" hackmode-init)
-    ("s" "Select Operation" hackmode-switch-op)]])
-
-
-
+    ("c" "Create operation." hackmode-init)
+    ("s" "Select operation." hackmode-switch-op)
+    ("g" "Goto current operation." hackmode-goto-operation)]])
 
 ;; Add hooks area
 (add-hook 'hackmode-operation-hook #'hackmode-goto-operation)
