@@ -25,13 +25,18 @@
 
 
 (defvar hackmode-dir "~/hackmode")
-(defvar hackmode-default-operation "default"
+(defcustom hackmode-checklists nil "Alist of files . name to be used for checklists.")
+(defcustom hackmode-data-dir (f-expand "~/.local/share/hackmode/") "The directory to be used to hold current hackmode state, you should leave this default!")
+
+(defvar hackmode-path-file (f-join hackmode-data-dir "op-path") "File with contents pointing to current hackmode path")
+(defvar hackmode-operation-file (f-join hackmode-data-dir "current-op") "File with contents the name of current hackmode op")
+(defvar hackmode-default-operation (f-read-text)
   "The default operation to use.")
 
 (defvar hackmode-operation-hook nil
   "Hook for when operation is changed")
 
-(defcustom hackmode-tools-dir (f-join hackmode-dir "hackmode-tools/")
+(defcustom hackmode-tools-dir (f-join hackmode-dir ".hackmode-tools/")
   "The Default path where tools to be uploaded will be pulled from."
   :group 'hackmode
   :type 'string)
@@ -48,27 +53,17 @@
   "Path to templates directory.")
 
 
-;; Alist of files that should be used.
-;; NOTE i do like the idea of multiple checklists, maybe it could be org headings
-;; or org files for a type of target too
-;; TODO Allow selecting from the loot file
-;; TODO also allow bulk import to the loot file
-;; Expand this It is an alist of (<name> . <filepath>)
-;; The user would be able to interactivly select a target
-;; the command that selects the target should be advisable to let me use any function to select the target
-(defcustom hackmode-checklists nil "Alist of files . name to be used for checklists.")
-
-(defcustom hackmode-data-dir (f-expand "~/.local/share/hackmode/") "The directory to be used to hold current hackmode state, you should leave this default!")
-
-
-(defun hackmode-read-target ()
-  "read a target"
-  (read-string "Enter a target: "))
-
-
-(defvar hackmode-target-select-fn #'hackmode-read-target
-  "The Function that will prompt to select a target. it must return a single string.")
-
+(defun hackmode-create-checklist-entry (checklist-file)
+  "Create an entry in the 'check-lists.org' file linking to CHECKLIST-FILE."
+  (let* ((todo-file (f-join default-directory "check-lists.org"))
+         (entry (format "\n* TODO %s\n  [[file:%s]]" (f-filename checklist-file) checklist-file)))
+    (unless (f-exists? todo-file)
+      (f-write-text "" 'utf-8 todo-file))
+    (with-temp-buffer
+      (insert-file-contents todo-file)
+      (goto-char (point-max))
+      (insert entry)
+      (write-region (point-min) (point-max) todo-file))))
 
 (defun hackmode-use-checklist ()
   "Read a target from the user and copy the checklist file."
@@ -81,58 +76,10 @@
     (unless (f-exists? destination-dir)
       (f-mkdir destination-dir))
     (f-copy file-path destination-file)
-    (hackmode-create-todo-entry destination-file)
+    (hackmode-create-checklist-entry destination-file)
     (message "Checklist for %s copied to %s" target destination-file)))
 
-(defun hackmode-create-todo-entry (checklist-file)
-  "Create an entry in the 'check-lists.org' file linking to CHECKLIST-FILE."
-  (let* ((todo-file (f-join default-directory "check-lists.org"))
-         (entry (format "\n* TODO %s\n  [[file:%s]]" (f-filename checklist-file) checklist-file)))
-    (unless (f-exists? todo-file)
-      (f-write-text "" 'utf-8 todo-file))
-    (with-temp-buffer
-      (insert-file-contents todo-file)
-      (goto-char (point-max))
-      (insert entry)
-      (write-region (point-min) (point-max) todo-file))))
 
-;; Source: https://emacs.stackexchange.com/a/35033
-(defun hackmode-popup (prompt default-index content)
-  "Pop up menu
-Takes args: prompt, default-index, content).
-Where the content is any number of (string, function) pairs,
-each representing a menu item."
-  (cond
-   ;; Ivy (optional)
-   ((fboundp 'ivy-read)
-    (ivy-read
-     prompt content
-     :preselect
-     (cond
-      ((= default-index -1)
-       nil)
-      (t
-       default-index))
-     :require-match t
-     :action
-     (lambda (x)
-       (pcase-let ((`(,_text . ,action) x))
-         (funcall action)))
-     :caller #'custom-popup))
-
-   ;; Fallback to completing read.
-   (t
-    (let ((choice
-           (funcall completing-read-function
-                    prompt
-                    content
-                    nil
-                    t
-                    nil
-                    nil
-                    (nth default-index content))))
-      (pcase-let ((`(,_text . ,action) (assoc choice content)))
-        (funcall action))))))
 
 
 
@@ -176,14 +123,19 @@ ones and overrule settings in the other lists."
     (f-mkdir-full-path hackmode-data-dir)
     (f-mkdir-full-path (f-join path ".config/"))
     (f-mkdir-full-path (f-join path "findings/"))
-    (f-touch (f-join path "findings/" "subdomains.txt"))
-    (f-touch (f-join path "findings/" "urls.txt"))
-    (f-touch (f-join path "findings/" "apex.txt"))
+    (f-touch (f-join path "findings/" ".keep"))
+    (f-touch (f-join path ".config/" "targets.txt"))
+    ;;  you can use either file
+    (f-symlink (f-join path ".config/" "targets.txt")
+               (f-join path ".config/" "targets"))
     (shell-command-to-string (format "git init %s" path))
     (shell-command-to-string (format "git add %s" (f-join path "findings/")))
     (shell-command-to-string "git commit -m \"Added Files\"")))
 
 
+(defun hackmode-get-finds-path (op-name)
+  "Get the path to the operation's .config/"
+  (f-join (hackmode-get-operation-path op-name) "findings/"))
 
 (defun hackmode-get-config-path (op-name)
   "Get the path to the operation's .config/"
@@ -332,16 +284,12 @@ You can also M-X hackmode-switch-op to switch"
   (interactive)
   (kill-new (f-expand (read-file-name "Select Wordlist: " (f-expand hackmode-wordlist-dir)))))
 
-
+;; TODO Move this to a yasnippet
 (defun hackmode-insert-wordlist ()
   "Copy the path of a wordlist to the kill ring"
   (interactive)
   (insert (f-expand (read-file-name "Select Wordlist: " (f-expand hackmode-wordlist-dir)))))
 
-
-
-;; (defun hackmode-create-checklist (name description &rest tasks)
-;;   (list :name nam :description description :tasks (apply #'list tasks)))
 
 
 
@@ -404,6 +352,10 @@ It also return the command in string form."
         (vterm-send-return)))
     (switch-to-buffer buffer-name)))
 
+(transient-define-prefix hackmode-menu ()
+  [["Operations"
+    ("c" "Create Operation" hackmode-init)
+    ("s" "Select Operation" hackmode-switch-op)]])
 
 
 
