@@ -23,14 +23,14 @@
 (require 'hackmode-loot)
 (require 'searchsploit)
 
-
+;;; Common var Setups
 (defvar hackmode-dir "~/hackmode")
 (defcustom hackmode-checklists nil "Alist of files . name to be used for checklists.")
 (defcustom hackmode-data-dir (f-expand "~/.local/share/hackmode/") "The directory to be used to hold current hackmode state, you should leave this default!")
 
 (defvar hackmode-path-file (f-join hackmode-data-dir "op-path") "File with contents pointing to current hackmode path")
 (defvar hackmode-operation-file (f-join hackmode-data-dir "current-op") "File with contents the name of current hackmode op")
-(defvar hackmode-default-operation (f-read-text)
+(defvar hackmode-default-operation "default"
   "The default operation to use.")
 
 (defvar hackmode-operation-hook nil
@@ -43,7 +43,7 @@
 
 
 (defvar hackmode-operation hackmode-default-operation
-  "Current operation name. Do not set this, instead use 'hackmode-lib-default-operation' or 'hackmode-lib-switch-op'.")
+  "Current operation name. Do not set this, instead use 'hackmode-menu' or 'hackmode-switch-op'.")
 
 (defcustom hackmode-interface "tun0"
   "Network interface to use by default")
@@ -52,7 +52,7 @@
 (defcustom hackmode-templates (f-expand "~/.config/hackmode/templates")
   "Path to templates directory.")
 
-
+;;; Check Lists
 (defun hackmode-create-checklist-entry (checklist-file)
   "Create an entry in the 'check-lists.org' file linking to CHECKLIST-FILE."
   (let* ((todo-file (f-join default-directory "check-lists.org"))
@@ -270,7 +270,6 @@ You can also M-X hackmode-switch-op to switch"
          (op-path (hackmode-get-operation-path name)))
     (f-copy template op-path)
     (f-symlink op-path default-directory)
-    (f-symlink (f-expand hackmode-tools-dir) (f-join op-path "tools/"))
     ;; TODO Move this stuff to a function
     (hackmode-create-envrc name)
     (setq hackmode-operation name)
@@ -332,26 +331,7 @@ It also return the command in string form."
 
     (hackmode-http-server hackmode-tools-dir port)))
 
-(defcustom hackmode-pwncat-port "9001"
-  "Default Port to use for pwncat-cs.")
-
-
-;; TODO move this away from vterm
-(defun hackmode-pwncat ()
-  "Start a pwncat-cs shell using vterm."
-  (interactive)
-  (require 'vterm)
-  (let ((buffer-name "*pwncat*")
-        (port (read-string "Enter Port number: " hackmode-pwncat-port)))
-
-    (unless (get-buffer buffer-name)
-      (with-current-buffer (get-buffer-create buffer-name)
-        (vterm-mode)
-
-        (vterm-send-string (format  "pwncat-cs -lp %s && exit" port))
-        (vterm-send-return)))
-    (switch-to-buffer buffer-name)))
-
+;;;Hackmode
 (transient-define-prefix hackmode-menu ()
   [["Operations"
     ("c" "Create Operation" hackmode-init)
