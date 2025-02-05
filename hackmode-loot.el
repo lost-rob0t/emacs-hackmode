@@ -9,7 +9,7 @@
 ;; Version: 0.0.1
 ;; Keywords: abbrev bib c calendar comm convenience data docs emulations extensions faces files frames games hardware help hypermedia i18n internal languages lisp local maint mail matching mouse multimedia news outlines processes terminals tex tools unix vc wp
 ;; Homepage: https://github.com/unseen/hackmode-loot
-;; Package-Requires: ((emacs "28.2"))
+;; Package-Requires: ((emacs "29.2"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
@@ -22,19 +22,20 @@
 (require 'f)
 (require 'elfeed)
 (require 'elfeed-org)
+(require 'sqlite)
 
+(defvar hackmode-capture-templates '(("d" "default" entry (file+olp+datetree "scratchpad.org" "ScratchPad") "* %<%Y>\n** %<%m %B>\n*** %<%d %A>\n %?" :clock-keep :clock-in :jump-to-captured)
+                                     ("l" "loot")
+                                     ("lu" "Capture a a user" entry (file+olp "loot.org" "Loot" "Users") "*** %T\n %^{username}p %^{password}p\n**** Notes\n %?")
+                                     ("lt" "program tech " entry (file+olp "tech.org" "Loot" "Tech") "** %T %^{url} %^{tech-name} " :kill-buffer t)
+                                     ("r" "reports")
+                                     ("rd" "Generate a report for the day." entry (file+headline "reports.org" "reports") "** %T\n %(hackmode-loot-capture-metadata) %?")
+                                     ("rb" "Generate a report for a bug." entry (file+headline "reports.org" "bugs") "** %T\n %^{bug-type}p\n%^{cvss-score}p\n*** description\n %?\n*** steps to reproduce %i")
+                                     ("pr" "Program Rss" entry (file+headline "rss.org" "RSS") "* %^{rss url} :elfeed: %^g")
+                                     ("pn" "program notes" entry (file+headline "notes.org" "notes") "** %T\n %x")
+                                     ("pt" "program todos" entry (file+headline "todos.org" "Todo Inbox") "** TODO %? ")
+                                     ("ps" "program script" entry (file+headline "tasks.org" "Automation") "** %T %^g\n #+NAME:%(read-string \"Enter name of Script\")\n#+BEGIN_SRC sh :async :results output replace :tangle attack.sh\n%x\n#+END_SRC\n%?")))
 
-(setq hackmode-capture-templates '(("d" "default" entry (file+olp+datetree "scratchpad.org" "ScratchPad") "* %<%Y>\n** %<%m %B>\n*** %<%d %A>\n %?" :clock-keep :clock-in :jump-to-captured)
-                                   ("l" "loot")
-                                   ("lu" "Capture a a user" entry (file+olp "loot.org" "Loot" "Users") "*** %T\n %^{username}p %^{password}p\n**** Notes\n %?")
-                                   ("lt" "program tech " entry (file+olp "tech.org" "Loot" "Tech") "** %T %^{url} %^{tech-name} " :kill-buffer t)
-                                   ("r" "reports")
-                                   ("rd" "Generate a report for the day." entry (file+headline "reports.org" "reports") "** %T\n %(hackmode-loot-capture-metadata) %?")
-                                   ("rb" "Generate a report for a bug." entry (file+headline "reports.org" "bugs") "** %T\n %^{bug-type}p\n%^{cvss-score}p\n*** description\n %?\n*** steps to reproduce %i")
-                                   ("pr" "Program Rss" entry (file+headline "rss.org" "RSS") "* %^{rss url} :elfeed: %^g")
-                                   ("pn" "program notes" entry (file+headline "notes.org" "notes") "** %T\n %x")
-                                   ("pt" "program todos" entry (file+headline "todos.org" "Todo Inbox") "** TODO %? ")
-                                   ("ps" "program script" entry (file+headline "tasks.org" "Automation") "** %T %^g\n #+NAME:%(read-string \"Enter name of Script\")\n#+BEGIN_SRC sh :async :results output replace :tangle attack.sh\n%x\n#+END_SRC\n%?")))
 
 
 
@@ -55,5 +56,7 @@
     (elfeed)))
 
 
-(provide 'hackmode-loot)
+
+
+(provide 'hackmode)
 ;;; hackmode-loot.el ends here

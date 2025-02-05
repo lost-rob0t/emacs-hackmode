@@ -20,37 +20,67 @@
 ;;; Code:
 (require 'async)
 (require 'f)
-(require 'hackmode-loot)
 (require 'searchsploit)
 
+
 ;;; Common var Setups
-(defvar hackmode-dir "~/hackmode")
-(defcustom hackmode-checklists nil "Alist of files . name to be used for checklists.")
-(defcustom hackmode-data-dir (f-expand "~/.local/share/hackmode/") "The directory to be used to hold current hackmode state, you should leave this default!")
+(defvar hackmode-operation hackmode-default-operation
+  "Current operation name. Do not set this, instead use 'hackmode-menu' or 'hackmode-switch-op'.")
 
-(defvar hackmode-path-file (f-join hackmode-data-dir "op-path") "File with contents pointing to current hackmode path")
-(defvar hackmode-operation-file (f-join hackmode-data-dir "current-op") "File with contents the name of current hackmode op")
-(defvar hackmode-default-operation "default"
-  "The default operation to use.")
+(defcustom hackmode-dir "~/hackmode"
+  "The base directory to store operation workspace in."
+  :group 'hackmode :type 'string)
 
-(defvar hackmode-operation-hook nil
-  "Hook for when operation is changed")
+(defcustom hackmode-checklists nil "Alist of files . name to be used for checklists."
+  :group 'hackmode)
+
+(defcustom hackmode-data-dir (f-expand "~/.local/share/hackmode/")
+  "The directory to be used to hold current state stating what and where the current operation is."
+  :group 'hackmode
+  :type 'string)
+
+(defcustom hackmode-capture-templates nil "Org Capture templates specific to hackmode,"
+  :group 'hackmode
+  :type 'list)
+
+(defcustom hackmode-path-file (f-join hackmode-data-dir "op-path") "File with contents pointing to current hackmode path"
+  :group 'hackmode
+  :type 'string)
+
+(defcustom hackmode-operation-file (f-join hackmode-data-dir "current-op") "File with contents the name of current hackmode op"
+  :group 'hackmode
+  :type 'string)
+
+(defcustom hackmode-default-operation "default"
+  "The default operation to use."
+  :group 'hackmode
+  :type 'string)
+
+(defcustom hackmode-operation-hook nil
+  "Hook that runs when the Hackmode operation changes."
+  :type 'hook
+  :group 'hackmode)
+
 
 (defcustom hackmode-tools-dir (f-join hackmode-dir ".hackmode-tools/")
   "The Default path where tools to be uploaded will be pulled from."
   :group 'hackmode
   :type 'string)
 
-
-(defvar hackmode-operation hackmode-default-operation
-  "Current operation name. Do not set this, instead use 'hackmode-menu' or 'hackmode-switch-op'.")
-
 (defcustom hackmode-interface "tun0"
-  "Network interface to use by default")
+  "Network interface to use by default."
+  :group 'hackmode
+  :type 'string)
 
 ;;;TODO Suggest skeltor templates maybe?
 (defcustom hackmode-templates (f-expand "~/.config/hackmode/templates")
-  "Path to templates directory.")
+  "Path to templates directory."
+  :group 'hackmode
+  :type 'list)
+
+(defcustom hackmode-wordlist-dir "~/wordlists/"
+  :group 'hackmode
+  :type 'string)
 
 ;;; Check Lists
 (defun hackmode-create-checklist-entry (checklist-file)
@@ -79,8 +109,15 @@
     (hackmode-create-checklist-entry destination-file)
     (message "Checklist for %s copied to %s" target destination-file)))
 
-
-
+;;; Hackmode capture from hacmode loot
+(defun hackmode-capture ()
+  "Capture a thought/data before it is lost to entropy."
+  (interactive)
+  (let* ((default-directory (hackmode-get-operation-path hackmode-operation))
+         (org-directory default-directory)
+         ;; NOTE you need to ensure this file is up to date.
+         (org-capture-templates hackmode-capture-templates))
+    (call-interactively #'org-capture)))
 
 
 ;; Operations and managment functions
@@ -171,25 +208,6 @@
         (message (format "operation %s created" name))))))
 
 
-
-;; TODO write the script
-(defcustom hackmode-hook nil
-  "hook run when entering hackmode"
-  :type 'hook
-  :options '(turn-on-auto-fill flyspell-mode evil-local-mode))
-
-(defcustom hackmode-dir "~/hackmode"
-  "Directory holding operations and scan output"
-  :type 'string
-  :options '("~/scans" "~/.local/share/hackmode"))
-(defcustom hackmode-default-operation "default"
-  "The Default name to use for when loading into hackmode.
-You can also M-X hackmode-switch-op to switch"
-  :type 'string)
-
-
-
-
 (defun hackmode-goto-operation ()
   "Go to the operation directory."
   (interactive)
@@ -210,7 +228,7 @@ You can also M-X hackmode-switch-op to switch"
     (split-string output "\n" t)))
 
 
-(defvar hackmode-wordlist-dir "~/wordlists/")
+
 (defun hackmode-add-host (hostname address)
   "Add a Host to /etc/hosts"
   (interactive "sEnter hostname: \nEnter IP: ")
@@ -325,8 +343,6 @@ You can also M-X hackmode-switch-op to switch"
 
 
 ;;; BBRF Asset Tracking.
-
-(defvar hackmode-bbrf-new-docmain-hook nil "Hook that is ran when a new domain is added to a program")
 
 (defun hackmode-bbrf-create-program (name)
   "Create a new BBRF program with NAME."
