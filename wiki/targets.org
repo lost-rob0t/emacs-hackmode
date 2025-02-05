@@ -1,0 +1,27 @@
+#+TITLE: Targets
+
+* Targets
+Targets first and for most are not a replacement for asset tracking.
+Its simply a way of focusing efforts on a target, autofilling in yasnippets.
+BBRF can be used for tracking assets.
+
+The varible ~hackmode-target~ is buffer-local.
+The current target is set by calling [[info:hackmode-set-target][hackmode-set-target]]. It provides a file selection which is defaulted to .config, from that file you can select a target. it is buffer-local so you can have multiple buffers open without needing to set-target and then having that clash. you can set-target but it will only affect that buffer.
+
+
+
+** Auto Filling
+
+Calling the [[info:hackmode-fill-target][hackmode-fill-target]] function will do the following:
+
+1. set a target if one is not set forthe buffer
+2. return the target string otherwise
+
+so this snippet is enough to make use of this feature.
+#+begin_src snippet
+# -*- mode: snippet -*-
+# name: nmap quick scan
+# key: nqs
+# --
+sudo nmap -A -oA `(read-file-name "Output file prefix: " "./")` `(hackmode-fill-target)`
+#+end_src
