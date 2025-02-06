@@ -24,6 +24,11 @@
 
 
 ;;; Common var Setups
+(defcustom hackmode-default-operation "default"
+  "The default operation to use."
+  :group 'hackmode
+  :type 'string)
+
 (defvar hackmode-operation hackmode-default-operation
   "Current operation name. Do not set this, instead use 'hackmode-menu' or 'hackmode-switch-op'.")
 
@@ -39,20 +44,15 @@
   :group 'hackmode
   :type 'string)
 
-(defcustom hackmode-capture-templates nil "Org Capture templates specific to hackmode,"
+(defcustom hackmode-capture-templates nil "Org Capture templates specific to hackmode,."
   :group 'hackmode
   :type 'list)
 
-(defcustom hackmode-path-file (f-join hackmode-data-dir "op-path") "File with contents pointing to current hackmode path"
+(defcustom hackmode-path-file (f-join hackmode-data-dir "op-path") "File with contents pointing to current hackmode path."
   :group 'hackmode
   :type 'string)
 
-(defcustom hackmode-operation-file (f-join hackmode-data-dir "current-op") "File with contents the name of current hackmode op"
-  :group 'hackmode
-  :type 'string)
-
-(defcustom hackmode-default-operation "default"
-  "The default operation to use."
+(defcustom hackmode-operation-file (f-join hackmode-data-dir "current-op") "File with contents the name of current hackmode op."
   :group 'hackmode
   :type 'string)
 
@@ -72,6 +72,7 @@
   :group 'hackmode
   :type 'string)
 
+
 ;;;TODO Suggest skeltor templates maybe?
 (defcustom hackmode-templates (f-expand "~/.config/hackmode/templates")
   "Path to templates directory."
@@ -79,6 +80,7 @@
   :type 'list)
 
 (defcustom hackmode-wordlist-dir "~/wordlists/"
+  "The directory for where wordlists are stored."
   :group 'hackmode
   :type 'string)
 
@@ -95,10 +97,12 @@
       (insert entry)
       (write-region (point-min) (point-max) todo-file))))
 
+
+;;;###autoload
 (defun hackmode-use-checklist ()
   "Read a target from the user and copy the checklist file."
   (interactive)
-  (let* ((target (funcall hackmode-target-select-fn))
+  (let* ((target (call-interactively (hackmode-fill-target)))
          (dir  (or default-directory (hackmode-get-operation-path  hackmode-operation)))
          (file-path (cdr (assoc (completing-read "Select a checklist: " hackmode-checklists nil t) hackmode-checklists)))
          (destination-dir (f-join dir "checklists"))
@@ -110,6 +114,7 @@
     (message "Checklist for %s copied to %s" target destination-file)))
 
 ;;; Hackmode capture from hacmode loot
+;;;###autoload
 (defun hackmode-capture ()
   "Capture a thought/data before it is lost to entropy."
   (interactive)
@@ -121,12 +126,13 @@
 
 
 ;; Operations and managment functions
+;;;###autoload
 (defun hackmode-get-operation-path (operation)
   "Get the full path for a OPERATION."
   (f-full (f-expand (f-join hackmode-dir operation))))
 
 (defun hackmode-create-op-config (operation)
-  "Create the config dirs for hackmode operation and gloabl if not exists."
+  "Create the config dirs for hackmode OPERATION and gloabl if not exists."
   (let* ((path (hackmode-get-operation-path operation))
          (default-directory path))
     (f-mkdir-full-path hackmode-data-dir)
@@ -136,58 +142,64 @@
 ;;  you can use either file
 
 
-(defun hackmode-get-finds-path (op-name)
-  "Get the path to the operation's .config/"
-  (f-join (hackmode-get-operation-path op-name) "findings/"))
+;;;###autoload
+(defun hackmode-get-finds-path (operation)
+  "Get the path to the OPERATION .config/ ."
+  (f-join (hackmode-get-operation-path operation) "findings/"))
 
-(defun hackmode-get-config-path (op-name)
-  "Get the path to the operation's .config/"
-  (f-join (hackmode-get-operation-path op-name) ".config/"))
+;;;###autoload
+(defun hackmode-get-config-path (operation)
+  "Get the path to the OPERATION .config ."
+  (f-join (hackmode-get-operation-path operation) ".config/"))
 
 
 
-(defun hackmode-read-config-file (op-name config-filename)
-  "Read a config for a operation"
+;;;###autoload
+(defun hackmode-read-config-file (operation config-filename)
+  "Read a config for a operation."
   (with-temp-buffer (insert-file-contents-literally
-                     (f-join (hackmode-get-config-path op-name) filename))
+                     (f-join (hackmode-get-config-path operation) filename))
                     (buffer-string)))
 
-(defun hackmode-write-operation-config (op-name config-filename strings)
+;;;###autoload
+(defun hackmode-write-operation-config (operation config-filename strings)
   "Write to the OPERATION's config."
-  (f-write-text strings 'utf-8 (f-join  (hackmode-get-config-path op-name) config-filename)))
+  (f-write-text strings 'utf-8 (f-join  (hackmode-get-config-path operation) config-filename)))
 
 
 
-(defun hackmode-create-envrc (op-name)
-  "Creates the .envrc for direnv."
-  (let* ((op-path (hackmode-get-operation-path op-name))
+(defun hackmode-create-envrc (operation)
+  "Creates the .envrc for direnv for OPERATION."
+  (let* ((op-path (hackmode-get-operation-path operation))
          (envrc-file (f-expand (f-join op-path ".envrc"))))
     (message "Writing envrc to: %s" envrc-file)
-    (f-write-text (format  "export HACKMODE_PATH=%s; export HACKMODE_OP=%s " op-path op-name) 'utf-8 envrc-file)))
+    (f-write-text (format  "export HACKMODE_PATH=%s; export HACKMODE_OP=%s " op-path operation) 'utf-8 envrc-file)))
 
-(defun hackmode-create-targets-file (op-name)
-  "Create The targets file for OP-NAME."
-  (let ((targets (f-join (hackmode-get-config-path op-name) "targets.txt")))
+(defun hackmode-create-targets-file (operation)
+  "Create The targets file for OPERATION."
+  (let ((targets (f-join (hackmode-get-config-path operation) "targets.txt")))
     (f-touch targets)))
 
-(defun hackmode-set-env (op-name)
-  "Set env vars for sub shells and scripts."
+(defun hackmode-set-env (operation)
+  "Set env vars for OPERATION."
   (setenv "PATH" (concat (getenv "PATH") ":" (f-full (f-expand hackmode-tools-dir))))
-  (setenv "HACKMODE_OP" op-name)
-  (setenv "HACKMODE_PATH" (hackmode-get-operation-path op-name)))
+  (setenv "HACKMODE_OP" operation)
+  (setenv "HACKMODE_PATH" (hackmode-get-operation-path operation)))
 
-(defun hackmode-set-metadata (op-name)
-  "create all the needed metadata for hackmode op."
-  (hackmode-create-op-config op-name)
-  (f-write-text (hackmode-get-operation-path op-name) 'utf-8 (f-join hackmode-data-dir "op-path"))
-  (f-write-text op-name 'utf-8 (f-join hackmode-data-dir "current-op"))
-  (hackmode-set-env op-name))
+(defun hackmode-set-metadata (operation)
+  "Create the metadata for OPERATION."
+  (hackmode-create-op-config operation)
+  (f-write-text (hackmode-get-operation-path operation) 'utf-8 (f-join hackmode-data-dir "op-path"))
+  (f-write-text operation 'utf-8 (f-join hackmode-data-dir "current-op"))
+  (hackmode-set-env operation))
 
 
+;;;###autoload
 (defun hackmode-operations ()
   "Return a list of operations."
   (mapcar #'f-base (f-directories (f-full hackmode-dir))))
 
+;;;###autoload
 (defun hackmode-switch-op ()
   "Switch operation."
   (interactive)
@@ -196,7 +208,7 @@
     (hackmode-set-metadata op)
     (run-hooks 'hackmode-operation-hook)))
 
-;; TODO move this to hackmode.el
+;;;###autoload
 (defun hackmode-new-operation ()
   "Create a new operation to group tasks"
   (interactive)
@@ -208,6 +220,7 @@
         (message (format "operation %s created" name))))))
 
 
+;;;###autoload
 (defun hackmode-goto-operation ()
   "Go to the operation directory."
   (interactive)
@@ -229,6 +242,7 @@
 
 
 
+;;;###autoload
 (defun hackmode-add-host (hostname address)
   "Add a Host to /etc/hosts"
   (interactive "sEnter hostname: \nEnter IP: ")
@@ -239,6 +253,7 @@
   (f-copy (f-join hackmode-templates name) dest))
 
 
+;;;###autoload
 (defun hackmode-init-subtarget ()
   "Create a sub target within hackmode."
   (interactive)
@@ -254,6 +269,7 @@
   (let ((path (hackmode-get-operation-path operation-name)))
     (f-write-text path 'utf-8)))
 
+;;;###autoload
 (defun hackmode-init ()
   "Interactivly create a operation."
   (interactive)
@@ -272,6 +288,7 @@
 
 (defvar-local hackmode-target nil "The current target. This var is used for yasnippets.")
 
+;;;###autoload
 (defun hackmode-select-target ()
   "Select a target from a text-file, defaults to the $HACKMODE_OP/.config/targets.txt file."
   (interactive)
@@ -281,21 +298,25 @@
                                                   (split-string (with-temp-buffer
                                                                   (insert-file-contents-literally targets-file)
                                                                   (buffer-string)) "\n")))))
+;;;###autoload
 (defun hackmode-set-target ()
   "Select a target and set it globally."
   (interactive)
   (setq-local hackmode-target (hackmode-select-target)))
 
+;;;###autoload
 (defun hackmode-fill-target ()
   "Set the buffers target if it hasent ben set otherwise return the target."
   (or hackmode-target (hackmode-set-target)))
 
+;;;###autoload
 (defun hackmode-kill-wordlist ()
   "Copy the path of a wordlist to the kill ring"
   (interactive)
   (kill-new (f-expand (read-file-name "Select Wordlist: " (f-expand hackmode-wordlist-dir)))))
 
 ;; TODO Move this to a yasnippet
+;;;###autoload
 (defun hackmode-insert-wordlist ()
   "Copy the path of a wordlist to the kill ring."
   (interactive)
@@ -304,6 +325,7 @@
 
 
 
+;;;###autoload
 (defun hackmode-upload-file ()
   "Copy a wget or curl command that can be used to upload a file."
   (interactive)
@@ -316,6 +338,7 @@
     (message cmd)
     (kill-new cmd)
     cmd))
+
 
 (defun hackmode-http-server (root port)
   "Http server using python with dir listing on ROOT and listening on PORT."
@@ -334,6 +357,7 @@
 
 
 
+;;;###autoload
 (defun hackmode-serve-tools ()
   "Serve the hackmode tools dir."
   (interactive)
@@ -344,6 +368,7 @@
 
 ;;; BBRF Asset Tracking.
 
+;;;###autoload
 (defun hackmode-bbrf-create-program (name)
   "Create a new BBRF program with NAME."
   (interactive (list (read-string "Enter Program name: " hackmode-operation)))
@@ -351,6 +376,7 @@
   (message "Created new program: %s" name))
 
 
+;;;###autoload
 (defun hackmode-bbrf-set-program (name)
   "Set the current BBRF program to NAME."
   (interactive
@@ -359,6 +385,7 @@
   (shell-command (format "bbrf use %s" name))
   (message "Set current program to: %s" name))
 
+;;;###autoload
 (defun hackmode-bbrf-add-inscope (domains)
   "Add DOMAINS to inscope for the current program."
   (interactive "sDomains to add to inscope (space-separated): ")
@@ -366,6 +393,7 @@
     (shell-command (format "bbrf inscope add %s" domains))
     (message "Added %s to inscope for program %s" domains program)))
 
+;;;###autoload
 (defun hackmode-bbrf-add-outscope (domains)
   "Add DOMAINS to outscope for the current program."
   (interactive "sDomains to add to outscope (space-separated): ")
@@ -373,6 +401,7 @@
     (shell-command (format "bbrf outscope add %s" domains))
     (message "Added %s to outscope for program %s" domains program)))
 
+;;;###autoload
 (defun hackmode-bbrf-add-domains (domains)
   "Add DOMAINS to the current program."
   (interactive "sDomains to add (space-separated): ")
@@ -381,6 +410,7 @@
     (message "Added domains %s to program %s" domains program)))
 
 
+;;;###autoload
 (defun hackmode-bbrf-add-ips (ips)
   "Add IPS to the current program."
   (interactive "sIPS to add (space-separated): ")
@@ -388,6 +418,7 @@
     (shell-command (format "bbrf ip add %s" ips))
     (message "Added ips %s to program %s" ips program)))
 
+;;;###autoload
 (defun hackmode-bbrf-add-urls (urls)
   "Add URLS to the current program."
   (interactive "sURLS to add (space-separated): ")
@@ -396,6 +427,7 @@
     (message "Added urls %s to program %s" ips program)))
 
 
+;;;###autoload
 (defun hackmode-bbrf-remove-services (srvs)
   "Remove SRVS from the current program."
   (interactive "sServices to add (space-separated): ")
@@ -405,24 +437,28 @@
 
 ;; TODO add-bulk domains command
 
+;;;###autoload
 (defun hackmode-bbrf-domains-from-region (start end)
   "Add domains from the selected region to BBRF."
   (interactive "r")
   (let ((domains (split-string (buffer-substring-no-properties start end) "\n")))
     (mapcar #'hackmode-bbrf-add-domains domains)))
 
+;;;###autoload
 (defun hackmode-bbrf-inscope-from-region (start end)
   "Add inscope from the selected region to BBRF."
   (interactive "r")
   (let ((scopes (split-string (buffer-substring-no-properties start end) "\n")))
     (mapcar #'hackmode-bbrf-add-inscope scopes)))
 
+;;;###autoload
 (defun hackmode-bbrf-ips-from-region (start end)
   "Add domains from the selected region to BBRF."
   (interactive "r")
   (let ((ips (split-string (buffer-substring-no-properties start end) "\n")))
     (mapcar #'hackmode-bbrf-add-ips ips)))
 
+;;;###autoload
 (defun hackmode-bbrf-urls-from-region (start end)
   "Add domains from the selected region to BBRF."
   (interactive "r")
@@ -430,6 +466,7 @@
     (mapcar #'hackmode-bbrf-add-urls urls)))
 
 
+;;;###autoload
 (defun hackmode-bbrf-start-listener ()
   "Run the bbrf listener. launches shell scripts defined in ~/.bbrf/hooks."
   (interactive)
@@ -437,6 +474,7 @@
 
 
 
+;;;###autoload
 (transient-define-prefix hackmode-bbrf-menu ()
   "BBRF menu"
   [["Add To BBRF"
@@ -451,12 +489,14 @@
 
 
 
+;;;###autoload
 (defun hackmode-bbrf ()
   "Open the BBRF menu."
   (interactive)
   (hackmode-bbrf-menu))
 
 ;;;Hackmode Menu
+;;;###autoload
 (transient-define-prefix hackmode-menu ()
   [["Operations"
     ("c" "Create operation." hackmode-init)
