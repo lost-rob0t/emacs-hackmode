@@ -5,9 +5,9 @@
 ;; Author:  <nsaspy@fedora.email>
 ;; Maintainer:  <nsaspy@fedora.email>
 ;; Created: May 21, 2023
-;; Modified: Dec 1, 2023
+;; Modified: Feb 5, 2025
 ;; Version: 0.0.8
-;; Keywords: security hacking
+;; Keywords: security pentesting reporting automation org
 ;; Homepage: https://github.com/unseen/hackmode
 ;; Package-Requires: ((emacs "28.2") (emacs-async "1.97") (f "v0.20.0"))
 ;;
@@ -20,7 +20,6 @@
 ;;; Code:
 (require 'async)
 (require 'f)
-(require 'searchsploit)
 
 
 ;;; Common var Setups
@@ -156,7 +155,7 @@
 
 ;;;###autoload
 (defun hackmode-read-config-file (operation config-filename)
-  "Read a config for a operation."
+  "Read OPERATION config file."
   (with-temp-buffer (insert-file-contents-literally
                      (f-join (hackmode-get-config-path operation) filename))
                     (buffer-string)))
@@ -340,30 +339,6 @@
     cmd))
 
 
-(defun hackmode-http-server (root port)
-  "Http server using python with dir listing on ROOT and listening on PORT."
-  (let ((buffer (get-buffer-create "*http*")))
-    (with-current-buffer (start-process buffer (format "http.server:%s" port) (executable-find "python") "-m" "http.server" port "-d" root)
-      (add-hook window-buffer-change-functions #'(lambda () (alert "New request from http server" :title "*hackmode-http-serv*"))))))
-
-
-
-(defun hackmode-stop-http ()
-  "Stop the http server."
-  (interactive)
-  (dolist (buffer (buffer-list))
-    (when (string-match-p "http" (buffer-name buffer))
-      (kill-buffer buffer))))
-
-
-
-;;;###autoload
-(defun hackmode-serve-tools ()
-  "Serve the hackmode tools dir."
-  (interactive)
-  (let ((port (read-string "port: " "8000")))
-
-    (hackmode-http-server hackmode-tools-dir port)))
 
 
 ;;; BBRF Asset Tracking.
@@ -487,13 +462,7 @@
     ("i" "Add to inscope" hackmode-bbrf-add-inscope)
     ("o" "Add to outscope" hackmode-bbrf-add-outscope)]])
 
-
-
-;;;###autoload
-(defun hackmode-bbrf ()
-  "Open the BBRF menu."
-  (interactive)
-  (hackmode-bbrf-menu))
+;; TODO hackmode-bbrf or asset listing is NEEDED.
 
 ;;;Hackmode Menu
 ;;;###autoload
