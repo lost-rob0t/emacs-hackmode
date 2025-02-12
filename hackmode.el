@@ -449,7 +449,7 @@
 
 
 
-;;;###autoload
+
 (transient-define-prefix hackmode-bbrf-menu ()
   "BBRF menu"
   [["Add To BBRF"
@@ -465,7 +465,6 @@
 ;; TODO hackmode-bbrf or asset listing is NEEDED.
 
 ;;;Hackmode Menu
-;;;###autoload
 (transient-define-prefix hackmode-menu ()
   [["Operations"
     ("c" "Create operation." hackmode-init)
