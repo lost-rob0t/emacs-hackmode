@@ -469,9 +469,8 @@
   [["Operations"
     ("c" "Create operation." hackmode-init)
     ("s" "Select operation." hackmode-switch-op)
-    ("g" "Goto current operation." hackmode-goto-operation)]
-   ["Asset mgnt"
-    ("b" "BBRF Menu." hackmode-bbrf-menu)]])
+    ("g" "Goto current operation." hackmode-goto-operation)]])
+
 
 ;; Add hooks area
 (add-hook 'hackmode-operation-hook #'hackmode-goto-operation)
