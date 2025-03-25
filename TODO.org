@@ -1,5 +1,34 @@
 #+title: Todo
 * TODO make more snippets
-* TODO Use a certail file for listing out all operations, so TRAMP can be supported
-Currently the dumb way i do things is throw all the ops into a dir, in reality it would be simpler to just read and write a A-list/plist or even a sqlite database.
-UIt would be nice to use a remote host uinstead of the local vm.
+These will need multiple for eshell/org-mode
+
+** Network Discovery & Mapping
+*** Nmap Scans
+*** Network Tech Analysis
+*** Service Enumeration
+*** Subdomain Discovery
+** Web Security Assessment
+*** SQL Injection
+*** Path Traversal Methods
+*** File Upload Security Bypass
+*** ZAP support
+*** Mitmproxy support
+** Password Security Testing
+*** Hashcat
+** Privilege Escalation Techniques
+*** Linux System
+*** Windows
+** Wireless Network Testing
+*** WPA/WPA2 Capture Methods
+*** Deauthentication Attacks
+*** Rogue Access Point Setup
+** Post-Exploitation Tools
+*** Reverse Shell Commands
+*** Data Exfiltration Methods
+**** Linux NC
+**** Windows TBD
+* IDEA Use a lisp data file for listing out all operations, so TRAMP can be supported
+Currently the dumb way i do things is throw all the ops into a dir, in  it would be simpler to just read and write a A-list/plist or even a sqlite database.
+It would be nice to use a remote host uinstead of the local vm.
+* IDEA Org roam Support?
+HackMode can be integrated into an existing Roam database or exist as a separate one. The concept allows for more fine-grained workflows when creating writeups. For example, users can visualize relevant notes through a graph view. Currently, hackmode utilizes org-capture through a dynamic variable let.
