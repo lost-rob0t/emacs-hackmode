@@ -121,15 +121,15 @@
       (write-region (point-min) (point-max) todo-file))))
 
 
-
 (defun hackmode-use-checklist ()
   "Read a target from the user and copy the checklist file."
   (interactive)
-  (let* ((target (call-interactively (hackmode-fill-target)))
+  (let* ((target (or hackmode-target (hackmode-select-target)))
          (dir  (or default-directory (hackmode-get-operation-path  hackmode-operation)))
          (file-path (cdr (assoc (completing-read "Select a checklist: " hackmode-checklists nil t) hackmode-checklists)))
          (destination-dir (f-join dir "checklists"))
-         (destination-file (f-join destination-dir (concat target "-checklist.org"))))
+         (destination-file (f-join destination-dir (concat (string-replace "/" "-"
+                                                                           target) "-checklist.org"))))
     (unless (f-exists? destination-dir)
       (f-mkdir destination-dir))
     (f-copy file-path destination-file)
@@ -466,49 +466,81 @@
   (let ((urls (split-string (buffer-substring-no-properties start end) "\n")))
     (mapcar #'hackmode-bbrf-add-urls urls)))
 
-
-
 (defun hackmode-bbrf-start-listener ()
   "Run the bbrf listener. launches shell scripts defined in ~/.bbrf/hooks."
   (interactive)
   (async-shell-command "while true; do bbrf listen; done" "*bbrf-listen*" "*bbrf-errors*"))
 
+(defun hackmode-bbrf-add-tag (key val)
+  "Add KEY and VAL to HACKMODE-BBRF-TAGS. when interacting with bbrf these will be used."
+  (interactive (list
+                (read-string "Enter key name: ")
+                (read-string "Enter value: ")))
+  (push (cons key val) hackmode-bbrf-tags))
 
+(defun hackmode-bbrf-clear-tags ()
+  "Remove all tags from HACKMODE-BBRF-TAGS."
+  (interactive)
+  (setf hackmode-bbrf-tags nil))
 
+(defun hackmode-bbrf-delete-tag (name)
+  "Delete tag by NAME."
+  (interactive (list
+                (completing-read "Key: " (mapcar #'car hackmode-bbrf-tags))))
+  (setf hackmode-bbrf-tags (assoc-delete-all name hackmode-bbrf-tags)))
+
+(defun hackmode-bbrf--display-tags ()
+  "Formats a display string for the hackmode-bbrf-menu"
+  (string-join (cl-loop for (key . val) in hackmode-bbrf-tags
+                        collect (propertize  (format "%s:%s" key val) 'face 'transient-argument)) "-t "))
 
 (transient-define-prefix hackmode-bbrf-menu ()
   "BBRF menu"
   [["Add To BBRF"
-    ("u" "Add Urls" hackmode-bbrf-add-urls)
-    ("i" "Add IPS" hackmode-bbrf-add-ips)
-    ("d" "Add domains" hackmode-bbrf-add-domains)]
+    ("u" "Add Urls" hackmode-bbrf-add-urls :transient t)
+    ("i" "Add IPS" hackmode-bbrf-add-ips :transient t)
+    ("d" "Add domains" hackmode-bbrf-add-domains :transient t)]
+
+   ["Tags"
+    (:info #'hackmode-bbrf--display-tags)
+    ("tt" "add a tag" hackmode-bbrf-add-tag)
+    ("td" "delete a tag" hackmode-bbrf-delete-tag)
+    ("-td" "delete all tags" hackmode-bbrf-clear-tags)]
+
    ["Programs"
+    (" " :info (lambda ()
+                 (propertize (format  "Current: %s" (hackmode-bbrf-execute-command "program" '("active"))) 'face 'success)))
     ("c" "Create program" hackmode-bbrf-create-program)
     ("s" "Set program" hackmode-bbrf-set-program)
-    ("i" "Add to inscope" hackmode-bbrf-add-inscope)
+    ("I" "Add to inscope" hackmode-bbrf-add-inscope)
     ("o" "Add to outscope" hackmode-bbrf-add-outscope)]])
 
-;; TODO hackmode-bbrf or asset listing is NEEDED.
-
-;;;Hackmode Menu
-;; (transient-define-suffix hackmode--menu-switch-operation (operation)
-;;   :description "Switch The current operation"
-;;   :transient t
-;;   :description #'(lambda ()
-;;                    (propertize (format "Current: %s" hackmode-operation) 'face 'transient-argument))
-
-;;   (interactive)
-;;   (setf hackmode-operation (completing-read "Select Operation" (hackmode-operations))))
 (transient-define-prefix hackmode-menu ()
-  [
-   ["Operations"
-    ("c" "Create operation." hackmode-init)
-    ("s" "Select operation." hackmode-switch-op)
-    ("g" "Goto current operation." hackmode-goto-operation)]])
+  "Main hackmode menu"
+  [:description (lambda ()
+                  (concat
+                   "[" "Operation: "
+                   (propertize hackmode-operation 'face 'transient-heading)
+                   "]\n"
+                   "["
+                   "Target: "
+                   (if hackmode-target
+                       (propertize hackmode-target 'face 'transient-heading)
+                     (propertize "NO TARGET SELECTED" 'face 'warning))
+                   "]\n"))
+
+                ["Assets"
+                 ("b" "BBRF" hackmode-bbrf-menu)]
+
+                ["Operations"
+                 ("c" "Create operation." hackmode-create-operation :transient t)
+                 ("so" "Select operation." hackmode-switch-op :transient t)
+                 ("g" "Goto current operation." hackmode-goto-operation :transient nil)]
+
+                ["Targets"
+                 ("st" "Select Target" hackmode-select-target :transient t)]])
 
 
-;; Add hooks area
-(add-hook 'hackmode-operation-hook #'hackmode-goto-operation)
 
 (provide 'hackmode)
 ;;; hackmode.el ends here
