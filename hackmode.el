@@ -42,8 +42,6 @@
   :type 'string)
 
 
-
-
 (defcustom hackmode-dir "~/hackmode"
   "The base directory to store operation workspace in."
   :group 'hackmode :type 'string)
@@ -147,7 +145,6 @@
          (org-capture-templates hackmode-capture-templates))
     (call-interactively #'org-capture)))
 
-
 ;; Operations and managment functions
 
 (defun hackmode-get-operation-path (operation)
@@ -215,8 +212,6 @@
   (f-write-text (hackmode-get-operation-path operation) 'utf-8 (f-join hackmode-data-dir "op-path"))
   (f-write-text operation 'utf-8 (f-join hackmode-data-dir "current-op"))
   (hackmode-set-env operation))
-
-
 
 (defun hackmode-operations ()
   "Return a list of operations."
@@ -364,16 +359,251 @@
     (kill-new cmd)
     cmd))
 
-
-
-
 ;;; BBRF Asset Tracking.
+
+(defvar hackmode-bbrf-tags nil
+  "Current tags to be added to bbrf documents.")
+
+(defvar hackmode-bbrf-last-command nil
+  "The last command ran.")
+
+(defun hackmode-bbrf-build-command (sub &optional args use-tags)
+  "Buiild the command string to run bbrf commands."
+  (let ((parts  (apply #'list "bbrf" sub args)))
+    (when use-tags
+      (cl-loop for (key . val) in hackmode-bbrf-tags
+               do (push "-t" parts)
+               do (push (format "%s:%s" key val) parts)))
+    (mapconcat #'identity parts " ")))
+
+(defun hackmode-bbrf-execute-command (subcommand &optional args use-tags)
+  "Execute SUBCOMMAND with optional ARGS (list of strings). If USE-TAGS is non-nil, include tags."
+  (let ((command (hackmode-bbrf-build-command subcommand args use-tags)))
+    (setq hackmode-bbrf-last-command command)
+    (let ((result (shell-command-to-string command)))
+      (string-trim result))))
+
+
+(defun hackmode-bbrf-list-programs ()
+  "Returns a list of programs in bbrf."
+  (let ((result (hackmode-bbrf-execute-command "programs")))
+    (string-split result)))
+
+(defun hackmode-bbrf-read-program (prompt &optional predicate require-match initial-input hist def inherit-input-method)
+  "Read a bbrf program name."
+  (completing-read prompt (hackmode-bbrf-list-programs) predicate require-match initial-input hist def inherit-input-method))
+
+
+
+(defun hackmode-bbrf-list (type)
+  "List assets by TYPE from BBRF. TYPE can be 'domains', 'ips', 'urls', or 'services'."
+  (let* ((cmd (hackmode-bbrf-build-command type nil nil))
+         (output (shell-command-to-string cmd)))
+    (if (string-empty-p (string-trim output))
+        nil
+      (let ((lines (seq-filter (lambda (line) (not (string-empty-p (string-trim line))))
+                               (split-string (string-trim output) "\n"))))
+        (if (string-equal type "urls")
+            (seq-map (lambda (line)
+                       (car (split-string line " ")))
+                     lines)
+          lines)))))
+
+(defun hackmode-bbrf-list-domains ()
+  "Get a list of all domains from BBRF."
+  (hackmode-bbrf-list "domains"))
+
+(defun hackmode-bbrf-list-ips ()
+  "Get a list of all IPs from BBRF."
+  (hackmode-bbrf-list "ips"))
+
+(defun hackmode-bbrf-list-urls ()
+  "Get a list of all URLs from BBRF."
+  (hackmode-bbrf-list "urls"))
+
+(defun hackmode-bbrf-list-services ()
+  "Get a list of all services from BBRF."
+  (hackmode-bbrf-list "services"))
+
+(defun hackmode-bbrf-list-all-assets ()
+  "Get an alist of all assets from BBRF grouped by type."
+  (list (cons 'domains (hackmode-bbrf-list-domains))
+        (cons 'ips (hackmode-bbrf-list-ips))
+        (cons 'urls (hackmode-bbrf-list-urls))
+        (cons 'services (hackmode-bbrf-list-services))))
+
+(defun hackmode-bbrf-read-asset (type prompt &optional predicate require-match initial-input hist def inherit-input-method)
+  "Read a BBRF asset of TYPE with completion."
+  (completing-read prompt
+                   (hackmode-bbrf-list type)
+                   predicate
+                   require-match
+                   initial-input
+                   hist
+                   def
+                   inherit-input-method))
+
+(defun hackmode-bbrf-read-domain (prompt &optional predicate require-match initial-input hist def inherit-input-method)
+  "Read a domain from BBRF with completion."
+  (hackmode-bbrf-read-asset "domains" prompt predicate require-match initial-input hist def inherit-input-method))
+
+(defun hackmode-bbrf-read-ip (prompt &optional predicate require-match initial-input hist def inherit-input-method)
+  "Read an IP from BBRF with completion."
+  (hackmode-bbrf-read-asset "ips" prompt predicate require-match initial-input hist def inherit-input-method))
+
+(defun hackmode-bbrf-read-url (prompt &optional predicate require-match initial-input hist def inherit-input-method)
+  "Read a URL from BBRF with completion."
+  (hackmode-bbrf-read-asset "urls" prompt predicate require-match initial-input hist def inherit-input-method))
+
+(defun hackmode-bbrf-read-service (prompt &optional predicate require-match initial-input hist def inherit-input-method)
+  "Read a service from BBRF with completion."
+  (hackmode-bbrf-read-asset "services" prompt predicate require-match initial-input hist def inherit-input-method))
+
+;; Interactive functions for quick access
+(defun hackmode-bbrf-show-domains ()
+  "Display all domains in a buffer."
+  (interactive)
+  (let ((domains (hackmode-bbrf-list-domains)))
+    (with-current-buffer (get-buffer-create "*BBRF Domains*")
+      (erase-buffer)
+      (insert (mapconcat 'identity domains "\n"))
+      (goto-char (point-min))
+      (display-buffer (current-buffer)))))
+
+(defun hackmode-bbrf-show-ips ()
+  "Display all IPs in a buffer."
+  (interactive)
+  (let ((ips (hackmode-bbrf-list-ips)))
+    (with-current-buffer (get-buffer-create "*BBRF IPs*")
+      (erase-buffer)
+      (insert (mapconcat 'identity ips "\n"))
+      (goto-char (point-min))
+      (display-buffer (current-buffer)))))
+
+(defun hackmode-bbrf-show-urls ()
+  "Display all URLs in a buffer."
+  (interactive)
+  (let ((urls (hackmode-bbrf-list-urls)))
+    (with-current-buffer (get-buffer-create "*BBRF URLs*")
+      (erase-buffer)
+      (insert (mapconcat 'identity urls "\n"))
+      (goto-char (point-min))
+      (display-buffer (current-buffer)))))
+
+(defun hackmode-bbrf-show-services ()
+  "Display all services in a buffer."
+  (interactive)
+  (let ((services (hackmode-bbrf-list-services)))
+    (with-current-buffer (get-buffer-create "*BBRF Services*")
+      (erase-buffer)
+      (insert (mapconcat 'identity services "\n"))
+      (goto-char (point-min))
+      (display-buffer (current-buffer)))))
+
+(defun hackmode-bbrf-show-all ()
+  "Display all assets in a formatted buffer."
+  (interactive)
+  (let ((all-assets (hackmode-bbrf-list-all-assets)))
+    (with-current-buffer (get-buffer-create "*BBRF All Assets*")
+      (erase-buffer)
+      (dolist (asset-type all-assets)
+        (let ((type (car asset-type))
+              (assets (cdr asset-type)))
+          (insert (format "=== %s ===\n" (upcase (symbol-name type))))
+          (if assets
+              (insert (mapconcat 'identity assets "\n"))
+            (insert "No assets found"))
+          (insert "\n\n")))
+      (goto-char (point-min))
+      (display-buffer (current-buffer)))))
+
+(defgroup hackmode nil
+  "HACKMODE customization group."
+  :group 'tools
+  :prefix "hackmode-")
+
+(defcustom hackmode-bbrf-program-added-hook nil
+  "Hook run when a program is added to HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
+
+(defcustom hackmode-bbrf-domain-added-hook nil
+  "Hook run when a domain is added to HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
+
+(defcustom hackmode-bbrf-ip-added-hook nil
+  "Hook run when an IP is added to HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
+
+(defcustom hackmode-bbrf-url-added-hook nil
+  "Hook run when a URL is added to HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
+
+(defcustom hackmode-bbrf-service-added-hook nil
+  "Hook run when a service is added to HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
+
+(defcustom hackmode-bbrf-program-removed-hook nil
+  "Hook run when a program is removed from HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
+
+(defcustom hackmode-bbrf-domain-removed-hook nil
+  "Hook run when a domain is removed from HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
+
+(defcustom hackmode-bbrf-ip-removed-hook nil
+  "Hook run when an IP is removed from HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
+
+(defcustom hackmode-bbrf-url-removed-hook nil
+  "Hook run when a URL is removed from HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
+
+(defcustom hackmode-bbrf-service-removed-hook nil
+  "Hook run when a service is removed from HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
+
+(defcustom hackmode-bbrf-program-updated-hook nil
+  "Hook run when a program is updated in HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
+
+(defcustom hackmode-bbrf-domain-updated-hook nil
+  "Hook run when a domain is updated in HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
+
+(defcustom hackmode-bbrf-ip-updated-hook nil
+  "Hook run when an IP is updated in HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
+
+(defcustom hackmode-bbrf-url-updated-hook nil
+  "Hook run when a URL is updated in HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
+
+(defcustom hackmode-bbrf-service-updated-hook nil
+  "Hook run when a service is updated in HACKMODE-BBRF."
+  :type 'hook
+  :group 'hackmode)
 
 
 (defun hackmode-bbrf-create-program (name)
-  "Create a new BBRF program with NAME."
-  (interactive (list (read-string "Enter Program name: " hackmode-operation)))
-  (shell-command (format "bbrf new %s" name))
+  "Create a new BBRF program with NAME and optional OPTIONS."
+  (interactive
+   (let ((name (read-string "Enter Program name: " hackmode-operation)))))
+  (hackmode-bbrf-execute-command "new" name nil)
+  (run-hooks 'hackmode-bbrf-program-added-hook)
   (message "Created new program: %s" name))
 
 
@@ -381,60 +611,95 @@
 (defun hackmode-bbrf-set-program (name)
   "Set the current BBRF program to NAME."
   (interactive
-   (list (completing-read "Select program: "
-                          (split-string (shell-command-to-string "bbrf programs") "\n" t))))
-  (shell-command (format "bbrf use %s" name))
+   (list (hackmode-bbrf-read-program "Select A program: ")))
+  (hackmode-bbrf-execute-command "use" (list name))
   (message "Set current program to: %s" name))
+
 
 
 (defun hackmode-bbrf-add-inscope (domains)
   "Add DOMAINS to inscope for the current program."
   (interactive "sDomains to add to inscope (space-separated): ")
-  (let ((program hackmode-operation))
-    (shell-command (format "bbrf inscope add %s" domains))
-    (message "Added %s to inscope for program %s" domains program)))
-
+  (hackmode-bbrf-execute-command "inscope add" (split-string domains))
+  (message "Added domains to inscope: %s" domains))
 
 (defun hackmode-bbrf-add-outscope (domains)
   "Add DOMAINS to outscope for the current program."
   (interactive "sDomains to add to outscope (space-separated): ")
-  (let ((program hackmode-operation))
-    (shell-command (format "bbrf outscope add %s" domains))
-    (message "Added %s to outscope for program %s" domains program)))
+  (hackmode-bbrf-execute-command "outscope add" (split-string domains))
+  (message "Added domains to outscope: %s" domains))
 
 
 (defun hackmode-bbrf-add-domains (domains)
   "Add DOMAINS to the current program."
   (interactive "sDomains to add (space-separated): ")
-  (let ((program hackmode-operation))
-    (shell-command (format "bbrf domain add %s" domains))
-    (message "Added domains %s to program %s" domains program)))
+  (hackmode-bbrf-execute-command "domain add" domains t)
+  (run-hooks 'hackmode-bbrf-domain-added-hook)
+
+  (message "Added domains %s" domains))
 
 
 
 (defun hackmode-bbrf-add-ips (ips)
   "Add IPS to the current program."
   (interactive "sIPS to add (space-separated): ")
-  (let ((program hackmode-operation))
-    (shell-command (format "bbrf ip add %s" ips))
-    (message "Added ips %s to program %s" ips program)))
+  (hackmode-bbrf-execute-command "ip add" ips t)
+  (run-hooks 'hackmode-bbrf-ip-added-hook)
+  (message "Added ips %s" ips))
 
 
 (defun hackmode-bbrf-add-urls (urls)
   "Add URLS to the current program."
   (interactive "sURLS to add (space-separated): ")
-  (let ((program hackmode-operation))
-    (shell-command (format "bbrf url add %s" urls))
-    (message "Added urls %s to program %s" ips program)))
+  (hackmode-bbrf-execute-command "url add" urls t)
+  (run-hooks 'hackmode-bbrf-url-added-hook)
+  (message "Added urls %s" urls))
 
-
+(defun hackmode-bbrf-add-services (srvs)
+  "add SRVS to the current program."
+  (interactive "sServices to add (space-separated): ")
+  (run-hooks 'hackmode-bbrf-service-added-hook)
+  (hackmode-bbrf-execute-command "service add" srvs))
 
 (defun hackmode-bbrf-remove-services (srvs)
   "Remove SRVS from the current program."
   (interactive "sServices to add (space-separated): ")
-  (let ((program hackmode-operation))
-    (shell-command (format "bbrf service remove %s" srvs))
-    (message "Added services %s to program %s" srvs program)))
+  (run-hooks 'hackmode-bbrf-service-removed-hook)
+  (hackmode-bbrf-execute-command "service remove" srvs))
+
+(defun hackmode-bbrf-remove-inscope (domains)
+  "Remove DOMAINS to inscope for the current program."
+  (interactive "sDomains to remove to inscope (space-separated): ")
+  (hackmode-bbrf-execute-command "inscope remove" (split-string domains))
+  (message "Removed domains to inscope: %s" domains))
+
+(defun hackmode-bbrf-remove-outscope (domains)
+  "Remove DOMAINS to outscope for the current program."
+  (interactive "sDomains to remove to outscope (space-separated): ")
+  (hackmode-bbrf-execute-command "outscope remove" (split-string domains))
+  (message "Removed domains to outscope: %s" domains))
+
+
+(defun hackmode-bbrf-remove-domains (domains)
+  "Remove DOMAINS to the current program."
+  (interactive "sDomains to remove (space-separated): ")
+  (hackmode-bbrf-execute-command "domain remove" domains t)
+  (run-hooks 'hackmode-bbrf-domain-removed-hook)
+  (message "Removed domains %s" domains))
+
+(defun hackmode-bbrf-remove-ips (ips)
+  "Remove IPS to the current program."
+  (interactive "sIPS to remove (space-separated): ")
+  (hackmode-bbrf-execute-command "ip remove" ips t)
+  (run-hooks 'hackmode-bbrf-ip-removed-hook)
+  (message "Removed ips %s" ips))
+
+(defun hackmode-bbrf-remove-urls (urls)
+  "Remove URLS to the current program."
+  (interactive "sURLS to remove (space-separated): ")
+  (hackmode-bbrf-execute-command "url remove" urls t)
+  (run-hooks 'hackmode-bbrf-url-removed-hook)
+  (message "Removed urls %s" urls))
 
 ;; TODO add-bulk domains command
 
@@ -445,13 +710,17 @@
   (let ((domains (split-string (buffer-substring-no-properties start end) "\n")))
     (mapcar #'hackmode-bbrf-add-domains domains)))
 
-
 (defun hackmode-bbrf-inscope-from-region (start end)
   "Add inscope from the selected region to BBRF."
   (interactive "r")
   (let ((scopes (split-string (buffer-substring-no-properties start end) "\n")))
     (mapcar #'hackmode-bbrf-add-inscope scopes)))
 
+(defun hackmode-bbrf-outscope-from-region (start end)
+  "Add inscope from the selected region to BBRF."
+  (interactive "r")
+  (let ((scopes (split-string (buffer-substring-no-properties start end) "\n")))
+    (mapcar #'hackmode-bbrf-add-inscope scopes)))
 
 (defun hackmode-bbrf-ips-from-region (start end)
   "Add domains from the selected region to BBRF."
