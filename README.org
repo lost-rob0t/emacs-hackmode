@@ -1,31 +1,289 @@
-#+TITLE: Readme
+#+TITLE: hackmode.el - Pentesters Lil lisp redpill
+* hackmode.el - Pentester's ELisp
 
+A comprehensive Emacs package designed to streamline penetration testing workflows by providing integrated tools for operation management, asset tracking, and automation - all from within your favorite editor.
 
+** Why hackmode?
 
-* Redteam lisp helpers for emacs
+As a pentester, you're constantly juggling multiple tools, keeping track of targets, managing scan outputs, and organizing findings across different engagements. Traditional workflows often involve:
 
-This is a collection of random stuff I have created to speed up hack the box stuff
+- Scattered terminal sessions across different directories
+- Manual file management for different operations
+- Copy-pasting commands between tools
+- Losing track of wordlists and payloads
+- Inconsistent project structure
 
-Please check the [[./changelog.org][changelog]] and the [[file:wiki/README.org][wiki]].
+*hackmode* was created to solve these pain points by bringing everything into Emacs - providing a unified interface for operation management, asset tracking with BBRF integration, and workflow automation. Think of it as your pentesting command center that grows with your methodology.
 
-Heres interesting stuff so far
+** Features
 
+- *Operation Management*: Create and switch between different pentesting engagements with isolated workspaces
+- *Asset Tracking*: Full BBRF (Bug Bounty Reconnaissance Framework) integration for managing targets, domains, IPs, and URLs
+- *File Upload Helper*: Generate wget/curl commands for easy file transfers to target systems
+- *Tool Serving*: Centralized tool management and serving
+- *Target Management*: Keep track of current targets with completion and easy switching
+- *Checklist Integration*: Copy and manage methodology checklists per target
+- *Transient Menus*: Clean, discoverable interfaces for all functionality
+- *Environment Integration*: Automatic direnv setup for proper environment isolation
 
-+ hackmode-kill-upload: Copy your ip and the path to the selected tool with a wget/curl command
-+ hackmode-serve-tools: Start python -m http.server at the base of ~hackmode-tools-dir~
-+ hackmode-init: bootstrap a cookie cutter directory (ie scans, files notes.org)
-+ searchsploit-search: search for exploits (kinda bugged)
-+ hackmode-pwncat: start a pwncat-cs shell (with vterm)
+** Installation
 
-** Deps
-+ f.el
-+ emacs-async
-+ vterm
-+ tools mentioned by function names.
+*** Using straight.el (Recommended)
 
-** TODO add stuff [2/5]
-+ [X] describe vars
-+ [X] fleshout hackmode-operations
-+ [-] fleshout checklist
-+ [ ] fleshout hackmode (non emacs) interaction
-+ [ ] Display tool output
+#+begin_src emacs-lisp
+(use-package hackmode
+  :straight (:host github :repo "lost-rob0t/emacs-hackmode")
+  :custom
+  (hackmode-dir "~/pentesting")                    ; Base directory for operations
+  (hackmode-interface "tun0")                      ; Default network interface
+  (hackmode-wordlist-dir "~/wordlists")           ; Wordlist directory
+  (hackmode-tools-dir "~/tools")                  ; Tools directory
+  (hackmode-templates "~/.config/hackmode/templates") ; Project templates
+  :config
+  ;; Hook to automatically navigate to operation directory
+  (add-hook 'hackmode-operation-hook #'hackmode-goto-operation)
+
+  ;; Optional: Set up capture templates for quick note-taking
+  (setq hackmode-capture-templates
+        '(("f" "Finding" entry
+           (file+headline "findings.org" "Findings")
+           "* TODO %^{Title}\n%T\n%?")
+          ("n" "Note" entry
+           (file+datetree "notes.org")
+           "* %^{Title}\n%T\n%?")))
+
+  ;; Optional: Set up checklists
+  (setq hackmode-checklists
+        '(("Web Application" . "~/checklists/webapp.org")
+          ("Network" . "~/checklists/network.org")
+          ("Active Directory" . "~/checklists/ad.org"))))
+#+end_src
+
+*** Manual Installation
+
+1. Clone the repository:
+#+begin_src bash
+git clone https://github.com/lost-rob0t/emacs-hackmode ~/.emacs.d/lisp/hackmode
+#+end_src
+
+2. Add to your Emacs configuration:
+#+begin_src emacs-lisp
+(add-to-list 'load-path "~/.emacs.d/lisp/hackmode")
+(require 'hackmode)
+#+end_src
+
+** Configuration Examples
+
+*** Basic Setup
+
+#+begin_src emacs-lisp
+(use-package hackmode
+  :straight (:host github :repo "lost-rob0t/emacs-hackmode")
+  :bind (("C-c h" . hackmode-menu)
+         ("C-c H" . hackmode-bbrf-menu))
+  :custom
+  (hackmode-dir "~/engagements")
+  (hackmode-interface "tun0")
+  (hackmode-wordlist-dir "/usr/share/wordlists")
+  :config
+  (add-hook 'hackmode-operation-hook #'hackmode-goto-operation))
+#+end_src
+
+*** Advanced Configuration with BBRF Integration
+
+#+begin_src emacs-lisp
+(use-package hackmode
+  :straight (:host github :repo "lost-rob0t/emacs-hackmode")
+  :bind (("C-c h" . hackmode-menu)
+         ("C-c H" . hackmode-bbrf-menu)
+         ("C-c t" . hackmode-select-target)
+         ("C-c u" . hackmode-upload-file))
+  :custom
+  (hackmode-dir "~/pentesting")
+  (hackmode-interface "tun0")
+  (hackmode-wordlist-dir "~/wordlists")
+  (hackmode-tools-dir "~/tools")
+  :config
+  ;; Auto-navigate to operation directory
+  (add-hook 'hackmode-operation-hook #'hackmode-goto-operation)
+
+  ;; BBRF hooks for automation
+  (add-hook 'hackmode-bbrf-domain-added-hook
+            (lambda () (message "New domain added to BBRF!")))
+
+  ;; Custom capture templates
+  (setq hackmode-capture-templates
+        '(("v" "Vulnerability" entry
+           (file+headline "findings.org" "Vulnerabilities")
+           "* %^{Severity|HIGH|MEDIUM|LOW} %^{Title}\n:PROPERTIES:\n:CVSS: %^{CVSS}\n:HOST: %^{Host}\n:PORT: %^{Port}\n:END:\n%T\n\n** Description\n%?\n\n** Impact\n\n** Remediation\n")
+          ("n" "Note" entry
+           (file+datetree "notes.org")
+           "* %^{Title}\n%T\n%?")
+          ("t" "Tool Output" entry
+           (file+headline "scans.org" "Scan Results")
+           "* %^{Tool} - %^{Target}\n%T\n#+BEGIN_EXAMPLE\n%?\n#+END_EXAMPLE")))
+
+  ;; Methodology checklists
+  (setq hackmode-checklists
+        '(("OWASP Top 10" . "~/checklists/owasp.org")
+          ("Network Pentest" . "~/checklists/network.org")
+          ("Active Directory" . "~/checklists/ad.org")
+          ("Mobile App" . "~/checklists/mobile.org"))))
+#+end_src
+
+** Usage Examples
+
+*** Basic Workflow
+
+1. *Create a new operation:*
+#+begin_src
+M-x hackmode-menu
+c (Create operation)
+#+end_src
+
+2. *Select a template and name your operation:*
+#+begin_src
+Select Template: web-app-template
+Enter Operation Name: client-webapp-2024
+#+end_src
+
+3. *Add targets:*
+#+begin_src
+M-x hackmode-add-target
+Enter Target: example.com
+#+end_src
+
+4. *Select current target:*
+#+begin_src
+M-x hackmode-select-target
+Select Target: example.com
+#+end_src
+
+*** BBRF Integration
+
+1. *Access BBRF menu:*
+#+begin_src
+M-x hackmode-bbrf-menu
+#+end_src
+
+2. *Create a new program:*
+#+begin_src
+c (Create program)
+Enter Program name: client-bounty-2024
+#+end_src
+
+3. *Add domains to BBRF:*
+#+begin_src
+d (Add domains)
+Domains to add: example.com subdomain.example.com
+#+end_src
+
+4. *Add tags for organization:*
+#+begin_src
+tt (add a tag)
+Enter key name: source
+Enter value: recon
+#+end_src
+
+*** File Upload Helper
+
+When you need to transfer tools to a target system:
+
+#+begin_src
+M-x hackmode-upload-file
+Tool to download: linpeas.sh
+interface: tun0
+port: 8000
+Cmd to use to download: wget
+#+end_src
+
+This generates and copies to clipboard:
+#+begin_src
+wget http://10.10.14.5:8000/linpeas.sh
+#+end_src
+
+*** Working with Regions
+
+Select a region containing domains and add them to BBRF:
+#+begin_src
+M-x hackmode-bbrf-domains-from-region
+#+end_src
+
+*** Checklist Management
+
+Apply a methodology checklist to current target:
+#+begin_src
+M-x hackmode-use-checklist
+Select a checklist: OWASP Top 10
+#+end_src
+
+This creates a target-specific checklist file and adds it to your check-lists.org.
+
+** Directory Structure
+
+hackmode creates a structured workspace for each operation:
+
+#+begin_src
+~/pentesting/
+├── client-webapp-2024/
+│   ├── .config/
+│   │   └── targets.txt
+│   ├── .envrc
+│   ├── checklists/
+│   │   └── example.com-checklist.org
+│   ├── findings/
+│   │   └── findings.org
+│   ├── notes.org
+│   ├── scans/
+│   └── check-lists.org
+└── .hackmode-tools/
+    ├── linpeas.sh
+    ├── winpeas.exe
+    └── ...
+#+end_src
+
+** Key Commands
+
+| Command | Description |
+|---------|-------------|
+| =hackmode-menu= | Main transient menu |
+| =hackmode-bbrf-menu= | BBRF asset management menu |
+| =hackmode-create-operation= | Create new operation |
+| =hackmode-switch-op= | Switch between operations |
+| =hackmode-select-target= | Select current target |
+| =hackmode-add-target= | Add new target |
+| =hackmode-upload-file= | Generate file upload command |
+| =hackmode-use-checklist= | Apply methodology checklist |
+| =hackmode-capture= | Quick capture notes/findings |
+
+** Dependencies
+
+- *Required:*
+  - =f.el= - File path manipulation
+  - =emacs-async= - Asynchronous processing
+  - =vterm= - Terminal emulation
+  - =transient= - Menu system (built into Emacs 28+)
+
+- *Optional:*
+  - =direnv= - Environment management
+  - =bbrf= - Bug Bounty Reconnaissance Framework
+  - =org-mode= - Note-taking and project management
+
+** Philosophy
+
+hackmode embodies the principle that your text editor should be the central hub of your workflow. By bringing pentesting operations into Emacs, you get:
+
+- *Consistency*: Same interface for all operations
+- *Integration*: Seamless connection between tools and documentation
+- *Automation*: Reduce repetitive tasks through Lisp scripting
+- *Organization*: Structured approach to engagement management
+- *Extensibility*: Easy to customize and extend for your specific needs
+
+* TODO  
++ Allow buffer local targets like gptel transient menu
++ Move template loading to yasnippet 
++ Move this stuff to a function (init metadata)
++ Add bulk domains command for bbrf
++ Add hackmode-bbrf asset listing
++ Suggest skeltor templates
++ Again remove f.el (one big swoop will be done need seperate elisp devel config)

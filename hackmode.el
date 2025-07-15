@@ -5,17 +5,19 @@
 ;; Author:  <nsaspy@fedora.email>
 ;; Maintainer:  <nsaspy@fedora.email>
 ;; Created: May 21, 2023
-;; Modified: Arpil 7, 2025
-;; Version: 0.0.9
+;; Modified: July 14, 2025
+;; Version: 0.0.10
 ;; Keywords: security pentesting reporting automation org
-;; Homepage: https://github.com/unseen/hackmode
+;; Homepage: https://github.com/lost-rob0t/emacs-hackmode
 ;; Package-Requires: ((emacs "28.2") (emacs-async "1.97") (f "v0.20.0"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
 ;;; Commentary:
 ;;
-;;  Pentesters Lil Lisp redpill.
+;;  Cyber Security tool automation, asset tracking and more.
+;;  BBRF Is currently the standard for asset tracking in this package.
+;;
 ;;
 ;;; Code:
 (require 'async)
@@ -176,7 +178,7 @@
 
 
 
-(defun hackmode-read-config-file (operation config-filename)
+(defun hackmode-read-config-file (operation filename)
   "Read OPERATION config file."
   (with-temp-buffer (insert-file-contents-literally
                      (f-join (hackmode-get-config-path operation) filename))
@@ -228,11 +230,6 @@
   (hackmode-set-metadata op)
   (run-hooks 'hackmode-operation-hook))
 
-
-
-
-
-
 (defun hackmode-new-operation ()
   "Create a new operation to group tasks"
   (interactive)
@@ -243,13 +240,10 @@
         (make-directory (hackmode-get-operation-path name))
         (message (format "operation %s created" name))))))
 
-
-
 (defun hackmode-goto-operation ()
   "Go to the operation directory."
   (interactive)
   (find-file (hackmode-get-operation-path hackmode-operation)))
-
 
 ;;; Utils
 (defun hackmode--get-interface-ip (interface)
@@ -263,25 +257,10 @@
   (let ((output (shell-command-to-string "ip addr show | awk '/^[0-9]+:/ {gsub(/:/,\"\"); print $2}'")))
     (split-string output "\n" t)))
 
-
-
-
 (defun hackmode-add-host (hostname address)
   "Add a Host to /etc/hosts"
   (interactive "sEnter hostname: \nEnter IP: ")
   (append-to-file (format "%s\t%s\n" address hostname) nil "/sudo::/etc/hosts"))
-
-
-
-
-(defun hackmode-init-subtarget ()
-  "Create a sub target within hackmode."
-  (interactive)
-  (let ((target (read-string "Enter target: " nil t nil))
-        (setq hackmode-operation (format "%s/%s" hackmode-operation target))
-        (when (not (f-dir? (hackmode-get-operation-path hackmode-operation)))
-          (f-mkdir (f-expand (hackmode-get-operation-path hackmode-operation)))))))
-
 
 
 (defun hackmode-init-metadata (operation-name)
@@ -289,29 +268,46 @@
   (let ((path (hackmode-get-operation-path operation-name)))
     (f-write-text path 'utf-8)))
 
+(defun hackmode-get-scan-dir (operation)
+  "Return The path to the output directoy for scans."
+  (f-expand (f-join (hackmode-get-operation-path operation) "scans")))
 
-(defun hackmode-init ()
+(defun hackmode--ensure-scans-dir (operation &optional dir)
+  "Ensure the the scans folder is created for the hackmode operation."
+  (let ((dir (if dir (f-join (hackmode-get-scan-dir operation))) (hackmode-get-scan-dir operation)))
+    (condition-case _
+        (unless (f-directory? dir)
+          (f-mkdir-full-path dir))
+      (message "Failed to create scans directory %s: %s" dir (error-message-string err)))))
+
+(defun hackmode-create-output-dir (operation tool-name)
+  "Create the output directory for scan output."
+  (let ((dir (f-expand (f-join (hackmode-get-scan-dir operation) tool-name (number-to-string (floor (time-to-seconds (current-time))))))))
+    (unless (f-exists? dir)
+      (f-mkdir-full-path dir))
+    dir))
+
+(defun hackmode-create-operation ()
   "Interactivly create a operation."
   (interactive)
   (let* ((template (completing-read "Select Template: " (f-directories hackmode-templates)))
-         (name (read-string "Enter Operaton Name: "))
-         (op-path (hackmode-get-operation-path name)))
+         (operation (read-string "Enter Operaton Operation: "))
+         (op-path (hackmode-get-operation-path operation)))
     (f-copy template op-path)
     (f-symlink op-path default-directory)
     ;; TODO Move this stuff to a function
-    (setf hackmode-operation name)
-    (hackmode-create-envrc name)
-    (hackmode-create-targets-file name)
-    (hackmode-set-metadata)
+    (setf hackmode-operation operation)
+    (hackmode-create-envrc operation)
+    (hackmode-create-targets-file operation)
+    (hackmode-set-metadata operation)
     (run-hooks 'hackmode-operation-hook)
     (hackmode-goto-operation)))
 
 ;; TODO allow for buffer local targets like gptel transient menu.
 
-
 (defvar hackmode-target nil "The currect active host or url or target.")
 (defvar hackmode-targets-file "targets.txt"
-  "The path to save targets under the HACKMODE_OP/.config/<fname>.")
+  "The path to save targets under the HACKMODE_OP/.config/<file>.")
 
 
 
@@ -353,9 +349,6 @@
   "Copy the path of a wordlist to the kill ring."
   (interactive)
   (insert (f-expand (read-file-name "Select Wordlist: " (f-expand hackmode-wordlist-dir)))))
-
-
-
 
 
 (defun hackmode-upload-file ()
