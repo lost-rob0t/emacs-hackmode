@@ -24,6 +24,8 @@
 ;;  TODO Remove f.el deps
 (require 'f)
 (require 'transient)
+(require 'hackmode-tools)
+
 
 
 (defcustom hackmode-data-dir (f-expand "~/.local/share/hackmode/")
@@ -218,6 +220,7 @@
   (mapcar #'f-base (f-directories (f-full hackmode-dir))))
 
 
+;;;###autoload
 (defun hackmode-switch-op (&optional op)
   "Switch operation."
   (interactive (list (completing-read "Select operation: " (hackmode-operations) nil nil)))
@@ -235,6 +238,7 @@
         (make-directory (hackmode-get-operation-path name))
         (message (format "operation %s created" name))))))
 
+;;;###autoload
 (defun hackmode-goto-operation ()
   "Go to the operation directory."
   (interactive)
@@ -282,6 +286,7 @@
       (f-mkdir-full-path dir))
     dir))
 
+;;;###autoload
 (defun hackmode-create-operation ()
   "Interactivly create a operation."
   (interactive)
@@ -768,6 +773,7 @@
   (string-join (cl-loop for (key . val) in hackmode-bbrf-tags
                         collect (propertize  (format "%s:%s" key val) 'face 'transient-argument)) " "))
 
+;;;###autoload
 (transient-define-prefix hackmode-bbrf-menu ()
   "BBRF menu"
   [["Add To BBRF"
@@ -790,6 +796,7 @@
     ("o" "Add to outscope" hackmode-bbrf-add-outscope :transient t)
     ("l" "Start listener" hackmode-bbrf-start-listener :transient t)]])
 
+;;;###autoload
 (transient-define-prefix hackmode-menu ()
   "Main hackmode menu"
   [:description (lambda ()
@@ -814,6 +821,7 @@
 
                 ["Targets"
                  ("st" "Select Target" hackmode-select-target :transient t)]])
+
 
 
 
