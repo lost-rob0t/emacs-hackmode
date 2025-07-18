@@ -367,19 +367,24 @@
 (defvar hackmode-bbrf-last-command nil
   "The last command ran.")
 
-(defun hackmode-bbrf-build-command (sub &optional args use-tags)
-  "Buiild the command string to run bbrf commands."
-  (let ((parts  (apply #'list "bbrf" sub args)))
-    (when use-tags
+(defun hackmode-bbrf-build-command (sub &rest args)
+  "Build the command string to run bbrf commands."
+  (string-join
+   (append
+    '("bbrf")
+    (list sub)
+    (when (and hackmode-bbrf-tags (member "add" args))
       (cl-loop for (key . val) in hackmode-bbrf-tags
-               do (push "-t" parts)
-               do (push (format "%s:%s" key val) parts)))
-    (mapconcat #'identity parts " ")))
+               collect "-t"
+               collect (format "%s:%s" key val)))
+    args)
+   " "))
 
-(defun hackmode-bbrf-execute-command (subcommand &optional args use-tags)
+(defun hackmode-bbrf-execute-command (subcommand &rest args)
   "Execute SUBCOMMAND with optional ARGS (list of strings). If USE-TAGS is non-nil, include tags."
-  (let ((command (hackmode-bbrf-build-command subcommand args use-tags)))
+  (let ((command (apply #'hackmode-bbrf-build-command subcommand args)))
     (setq hackmode-bbrf-last-command command)
+    (message "%s" command)
     (let ((result (shell-command-to-string command)))
       (string-trim result))))
 
@@ -397,7 +402,7 @@
 
 (defun hackmode-bbrf-list (type)
   "List assets by TYPE from BBRF. TYPE can be 'domains', 'ips', 'urls', or 'services'."
-  (let* ((cmd (hackmode-bbrf-build-command type nil nil))
+  (let* ((cmd (hackmode-bbrf-build-command type))
          (output (shell-command-to-string cmd)))
     (if (string-empty-p (string-trim output))
         nil
@@ -611,8 +616,8 @@
 (defun hackmode-bbrf-set-program (name)
   "Set the current BBRF program to NAME."
   (interactive
-   (list (hackmode-bbrf-read-program "Select A program: ")))
-  (hackmode-bbrf-execute-command "use" (list name))
+   (list (hackmode-bbrf-read-program "Select a program: ")))
+  (hackmode-bbrf-execute-command "use" name)
   (message "Set current program to: %s" name))
 
 
@@ -620,20 +625,20 @@
 (defun hackmode-bbrf-add-inscope (domains)
   "Add DOMAINS to inscope for the current program."
   (interactive "sDomains to add to inscope (space-separated): ")
-  (hackmode-bbrf-execute-command "inscope add" (split-string domains))
+  (hackmode-bbrf-execute-command "inscope" "add" (split-string domains))
   (message "Added domains to inscope: %s" domains))
 
 (defun hackmode-bbrf-add-outscope (domains)
   "Add DOMAINS to outscope for the current program."
   (interactive "sDomains to add to outscope (space-separated): ")
-  (hackmode-bbrf-execute-command "outscope add" (split-string domains))
+  (hackmode-bbrf-execute-command "outscope" "add" (split-string domains))
   (message "Added domains to outscope: %s" domains))
 
 
 (defun hackmode-bbrf-add-domains (domains)
   "Add DOMAINS to the current program."
   (interactive "sDomains to add (space-separated): ")
-  (hackmode-bbrf-execute-command "domain add" domains t)
+  (hackmode-bbrf-execute-command "domain" "add" domains)
   (run-hooks 'hackmode-bbrf-domain-added-hook)
 
   (message "Added domains %s" domains))
@@ -643,7 +648,7 @@
 (defun hackmode-bbrf-add-ips (ips)
   "Add IPS to the current program."
   (interactive "sIPS to add (space-separated): ")
-  (hackmode-bbrf-execute-command "ip add" ips t)
+  (hackmode-bbrf-execute-command "ip" "add" ips)
   (run-hooks 'hackmode-bbrf-ip-added-hook)
   (message "Added ips %s" ips))
 
@@ -651,7 +656,7 @@
 (defun hackmode-bbrf-add-urls (urls)
   "Add URLS to the current program."
   (interactive "sURLS to add (space-separated): ")
-  (hackmode-bbrf-execute-command "url add" urls t)
+  (hackmode-bbrf-execute-command "url" "add" urls)
   (run-hooks 'hackmode-bbrf-url-added-hook)
   (message "Added urls %s" urls))
 
@@ -659,45 +664,45 @@
   "add SRVS to the current program."
   (interactive "sServices to add (space-separated): ")
   (run-hooks 'hackmode-bbrf-service-added-hook)
-  (hackmode-bbrf-execute-command "service add" srvs))
+  (hackmode-bbrf-execute-command "service" "add" srvs))
 
 (defun hackmode-bbrf-remove-services (srvs)
   "Remove SRVS from the current program."
   (interactive "sServices to add (space-separated): ")
   (run-hooks 'hackmode-bbrf-service-removed-hook)
-  (hackmode-bbrf-execute-command "service remove" srvs))
+  (hackmode-bbrf-execute-command "service" "remove" srvs))
 
 (defun hackmode-bbrf-remove-inscope (domains)
   "Remove DOMAINS to inscope for the current program."
   (interactive "sDomains to remove to inscope (space-separated): ")
-  (hackmode-bbrf-execute-command "inscope remove" (split-string domains))
+  (hackmode-bbrf-execute-command "inscope" "remove" (split-string domains))
   (message "Removed domains to inscope: %s" domains))
 
 (defun hackmode-bbrf-remove-outscope (domains)
   "Remove DOMAINS to outscope for the current program."
   (interactive "sDomains to remove to outscope (space-separated): ")
-  (hackmode-bbrf-execute-command "outscope remove" (split-string domains))
+  (hackmode-bbrf-execute-command "outscope" "remove" (split-string domains))
   (message "Removed domains to outscope: %s" domains))
 
 
 (defun hackmode-bbrf-remove-domains (domains)
   "Remove DOMAINS to the current program."
   (interactive "sDomains to remove (space-separated): ")
-  (hackmode-bbrf-execute-command "domain remove" domains t)
+  (hackmode-bbrf-execute-command "domain" "remove" domains)
   (run-hooks 'hackmode-bbrf-domain-removed-hook)
   (message "Removed domains %s" domains))
 
 (defun hackmode-bbrf-remove-ips (ips)
   "Remove IPS to the current program."
   (interactive "sIPS to remove (space-separated): ")
-  (hackmode-bbrf-execute-command "ip remove" ips t)
+  (hackmode-bbrf-execute-command "ip" "remove" ips)
   (run-hooks 'hackmode-bbrf-ip-removed-hook)
   (message "Removed ips %s" ips))
 
 (defun hackmode-bbrf-remove-urls (urls)
   "Remove URLS to the current program."
   (interactive "sURLS to remove (space-separated): ")
-  (hackmode-bbrf-execute-command "url remove" urls t)
+  (hackmode-bbrf-execute-command "url" "remove" urls)
   (run-hooks 'hackmode-bbrf-url-removed-hook)
   (message "Removed urls %s" urls))
 
@@ -761,7 +766,7 @@
 (defun hackmode-bbrf--display-tags ()
   "Formats a display string for the hackmode-bbrf-menu"
   (string-join (cl-loop for (key . val) in hackmode-bbrf-tags
-                        collect (propertize  (format "%s:%s" key val) 'face 'transient-argument)) "-t "))
+                        collect (propertize  (format "%s:%s" key val) 'face 'transient-argument)) " "))
 
 (transient-define-prefix hackmode-bbrf-menu ()
   "BBRF menu"
@@ -772,17 +777,18 @@
 
    ["Tags"
     (:info #'hackmode-bbrf--display-tags)
-    ("tt" "add a tag" hackmode-bbrf-add-tag)
-    ("td" "delete a tag" hackmode-bbrf-delete-tag)
-    ("-td" "delete all tags" hackmode-bbrf-clear-tags)]
+    ("tt" "add a tag" hackmode-bbrf-add-tag :transient t)
+    ("td" "delete a tag" hackmode-bbrf-delete-tag :transient t)
+    ("-td" "delete all tags" hackmode-bbrf-clear-tags :transient t)]
 
    ["Programs"
     (" " :info (lambda ()
-                 (propertize (format  "Current: %s" (hackmode-bbrf-execute-command "program" '("active"))) 'face 'success)))
-    ("c" "Create program" hackmode-bbrf-create-program)
-    ("s" "Set program" hackmode-bbrf-set-program)
-    ("I" "Add to inscope" hackmode-bbrf-add-inscope)
-    ("o" "Add to outscope" hackmode-bbrf-add-outscope)]])
+                 (propertize (format  "Current: %s" (hackmode-bbrf-execute-command "program" "active")) 'face 'success)))
+    ("c" "Create program" hackmode-bbrf-create-program :transient t)
+    ("s" "Set program" hackmode-bbrf-set-program :transient t)
+    ("I" "Add to inscope" hackmode-bbrf-add-inscope :transient t)
+    ("o" "Add to outscope" hackmode-bbrf-add-outscope :transient t)
+    ("l" "Start listener" hackmode-bbrf-start-listener :transient t)]])
 
 (transient-define-prefix hackmode-menu ()
   "Main hackmode menu"
