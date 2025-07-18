@@ -126,10 +126,7 @@ alias hackmode="cd $HOME/Documents/hackmode"
 hackmode works well with direnv for automatic environment management:
 
 #+begin_src bash
-function fancy-shell () {
-    eval "$(direnv hook bash)"
-    eval "$(starship init bash)"
-}
+eval "$(direnv hook bash)"
 #+end_src
 
 *** FZF Integration
@@ -139,11 +136,6 @@ Several functions use fzf for interactive selection:
 
 ** Installation
 Add these functions to your =~/.bashrc= or =~/.bash_profile=:
-
-#+begin_src bash
-# Copy the functions above to your shell configuration
-source ~/.bashrc  # or restart your shell
-#+end_src
 
 ** Workflow Examples
 
