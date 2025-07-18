@@ -1,0 +1,133 @@
+#+Title: BBRF Integration
+
+* BBRF + Hackmode
+
+hackmode integrates with [[https://honoki.net/2020/10/08/introducing-bbrf-yet-another-bug-bounty-reconnaissance-framework/][BBRF]] (Bug Bounty Reconnaissance Framework) for comprehensive asset tracking. This allows collaboration over multiple hosts using CouchDB as the backend.
+
+** Installation
+Install BBRF using pipx for proper virtual environment isolation:
+#+begin_src shell
+git clone https://github.com/honoki/bbrf-client.git
+cd bbrf-client
+pipx install .
+#+end_src
+
+** Usage
+*** Main Interface
+Access the BBRF menu with: =M-x hackmode-bbrf-menu=
+
+*** Program Management
+**** Creating Programs
+#+begin_src emacs-lisp
+(hackmode-bbrf-create-program "client-webapp-2024")
+#+end_src
+
+By default, the initial program name matches the current ~hackmode-operation~.
+
+**** Setting Active Program
+#+begin_src emacs-lisp
+(hackmode-bbrf-set-program "client-webapp-2024")
+#+end_src
+
+*** Asset Management
+**** Adding Assets
+#+begin_src emacs-lisp
+;; Add domains
+(hackmode-bbrf-add-domains "example.com subdomain.example.com")
+
+;; Add IP addresses
+(hackmode-bbrf-add-ips "192.168.1.1 10.0.0.1")
+
+;; Add URLs
+(hackmode-bbrf-add-urls "https://example.com https://api.example.com")
+
+;; Add services
+(hackmode-bbrf-add-services "example.com:80 example.com:443")
+#+end_src
+
+**** Adding from Regions
+Select text in a buffer and add assets directly:
+- =M-x hackmode-bbrf-domains-from-region=
+- =M-x hackmode-bbrf-ips-from-region= 
+- =M-x hackmode-bbrf-urls-from-region=
+
+**** Scope Management
+#+begin_src emacs-lisp
+;; Add to scope
+(hackmode-bbrf-add-inscope "*.example.com")
+
+;; Add to out-of-scope
+(hackmode-bbrf-add-outscope "admin.example.com")
+#+end_src
+
+*** Viewing Assets
+**** List Assets
+#+begin_src emacs-lisp
+;; View all domains
+(hackmode-bbrf-show-domains)
+
+;; View all IPs
+(hackmode-bbrf-show-ips)
+
+;; View all URLs
+(hackmode-bbrf-show-urls)
+
+;; View all services
+(hackmode-bbrf-show-services)
+
+;; View everything
+(hackmode-bbrf-show-all)
+#+end_src
+
+**** Asset Retrieval
+#+begin_src emacs-lisp
+;; Get lists for programmatic use
+(hackmode-bbrf-list-domains)
+(hackmode-bbrf-list-ips)
+(hackmode-bbrf-list-urls)
+(hackmode-bbrf-list-services)
+#+end_src
+
+*** Tag Management
+#+begin_src emacs-lisp
+;; Add tags to assets
+(hackmode-bbrf-add-tag "source" "recon")
+(hackmode-bbrf-add-tag "priority" "high")
+
+;; Remove tags
+(hackmode-bbrf-delete-tag "outdated")
+
+;; Clear all tags
+(hackmode-bbrf-clear-tags)
+#+end_src
+
+*** Removing Assets
+#+begin_src emacs-lisp
+;; Remove assets
+(hackmode-bbrf-remove-domains "old.example.com")
+(hackmode-bbrf-remove-ips "192.168.1.100")
+(hackmode-bbrf-remove-urls "https://deprecated.example.com")
+#+end_src
+
+*** Automation
+**** Listener Mode
+Start BBRF listener for automated asset discovery:
+#+begin_src emacs-lisp
+(hackmode-bbrf-start-listener)
+#+end_src
+
+** Integration with Workflows
+BBRF assets can be used in automated workflows and reconnaissance pipelines (requires workflow system cleanup).
+
+** Interactive Selection
+All functions support interactive completion:
+- =hackmode-bbrf-read-domain= - Select from known domains
+- =hackmode-bbrf-read-ip= - Select from known IPs  
+- =hackmode-bbrf-read-url= - Select from known URLs
+- =hackmode-bbrf-read-service= - Select from known services
+
+** Planned Enhancements *(needs API cleanup)*
+- Enhanced command completion (bbrf-complete.el)
+- Automated workflow integration
+- Better transient menu organization
+- Bulk import/export functionality

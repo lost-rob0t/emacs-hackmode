@@ -93,9 +93,9 @@ print(f"User IDs: {user_ids}")
 #+end_src
 
 #+RESULTS:
-: Hackmode Operation: Monitored
-: Hackmode Operation Path: /home/unseen/Documents/hackmode/Monitored/
-: Hackmode Files Path: /home/unseen/Documents/hackmode/Monitored/.config/
-: Current Operation File Path: /home/unseen/Documents/hackmode/Monitored/.config/current-op
-: Current Path to Operation File Path: /home/unseen/Documents/hackmode/Monitored/.config/op-path
+: Hackmode Operation: client-webapp-2024
+: Hackmode Operation Path: /home/user/hackmode/client-webapp-2024/
+: Hackmode Files Path: /home/user/hackmode/client-webapp-2024/.config/
+: Current Operation File Path: /home/user/hackmode/client-webapp-2024/.config/current-op
+: Current Path to Operation File Path: /home/user/hackmode/client-webapp-2024/.config/op-path
 : User IDs: []

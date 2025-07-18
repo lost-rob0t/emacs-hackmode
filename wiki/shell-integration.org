@@ -1,0 +1,184 @@
+#+title: Shell Integration
+
+* Shell Integration
+hackmode can be enhanced with shell functions and aliases to provide a more streamlined command-line experience. These functions complement the Emacs interface and provide quick access to hackmode operations from any terminal.
+
+** Environment Setup
+hackmode environment variables are automatically loaded in your shell:
+
+#+begin_src bash
+export HACKMODE_OP=$(cat ~/.local/share/hackmode/current-op | head -n 1)
+export HACKMODE_PATH=$(cat ~/.local/share/hackmode/op-path | head -n 1)
+export HACKMODE_BASE_DIR="/home/$USER/Documents/hackmode/"
+#+end_src
+
+** Shell Functions
+
+*** Operation Switching
+**** =shm= - Switch Hackmode Operation
+Quickly switch between hackmode operations using fzf:
+
+#+begin_src bash
+function shm() {
+  selected_dir=$(find "$HACKMODE_BASE_DIR" -maxdepth 1 -type d | fzf)
+  if [ -n "$selected_dir" ]; then
+    export HACKMODE_OP=$(basename "$selected_dir")
+    export HACKMODE_PATH="$selected_dir"
+    echo "$HACKMODE_OP" > ~/.local/share/hackmode/current-op
+    echo "$HACKMODE_PATH" > ~/.local/share/hackmode/op-path
+    cd "$selected_dir"
+  fi
+}
+#+end_src
+
+*Usage*: Type =shm= and use fzf to select an operation directory.
+
+*** Settings Management
+**** =hackmode-setting= - Edit Operation Settings
+Edit configuration files specific to the current operation:
+
+#+begin_src bash
+function hackmode-setting() {
+  if [ -z "$HACKMODE_OP" ]; then
+    echo "HACKMODE_OP is not set. Please select a hackmode directory using 'shm' first."
+    return 1
+  fi
+
+  settings_dir="$HACKMODE_PATH/.config/$HACKMODE_OP"
+
+  # Create settings directory if it doesn't exist
+  if [ ! -d "$settings_dir" ]; then
+    mkdir -p "$settings_dir"
+    read -p "Enter the name of the setting: " setting_name
+  else
+    setting_name=$(basename $(find "$settings_dir" -type f | fzf ))
+  fi
+
+  # Use the specified editor or fallback to a default editor
+  editor=${VISUAL:-$EDITOR}
+  editor=${editor:-nano}
+
+  # Prompt user for setting name
+  if [ -n "$setting_name" ]; then
+    setting_file="$settings_dir/$setting_name"
+    $editor "$setting_file"
+  else
+    echo "Setting name cannot be empty."
+  fi
+}
+#+end_src
+
+*Usage*: Type =hackmode-setting= to create/edit operation-specific configuration files.
+
+**** =list-hackmode-settings= - List All Settings
+Display all configuration files and their contents for the current operation:
+
+#+begin_src bash
+function list-hackmode-settings () {
+  if [ -z "$HACKMODE_OP" ]; then
+    echo "HACKMODE_OP is not set. Please select a hackmode directory using 'shm' first."
+    return 1
+  fi
+
+  settings_dir="$HACKMODE_PATH/.config/"
+
+  if [ ! -d "$settings_dir" ]; then
+    echo "Settings directory not found: $settings_dir"
+    return 1
+  fi
+
+  for setting_file in "$settings_dir"/*; do
+    setting_name=$(basename "$setting_file")
+    if [ -f "$setting_file" ]; then
+      while IFS= read -r line; do
+        echo "$setting_name: $line"
+      done < "$setting_file"
+    fi
+  done
+}
+#+end_src
+
+*Usage*: Type =list-hackmode-settings= to see all configuration files and their contents.
+
+** Aliases
+
+*** =cdhm= - Change to Hackmode Directory
+Quick navigation to the current hackmode operation directory:
+
+#+begin_src bash
+alias cdhm="cd $HACKMODE_PATH"
+#+end_src
+
+*Usage*: Type =cdhm= to navigate to the current operation directory.
+
+*** =hackmode= - Navigate to Hackmode Base
+Navigate to the base hackmode directory:
+
+#+begin_src bash
+alias hackmode="cd $HOME/Documents/hackmode"
+#+end_src
+
+*Usage*: Type =hackmode= to go to the main hackmode directory.
+
+** Integration with Other Tools
+
+*** Direnv Support
+hackmode works well with direnv for automatic environment management:
+
+#+begin_src bash
+function fancy-shell () {
+    eval "$(direnv hook bash)"
+    eval "$(starship init bash)"
+}
+#+end_src
+
+*** FZF Integration
+Several functions use fzf for interactive selection:
+- =shm= - Select operations
+- =hackmode-setting= - Select configuration files
+
+** Installation
+Add these functions to your =~/.bashrc= or =~/.bash_profile=:
+
+#+begin_src bash
+# Copy the functions above to your shell configuration
+source ~/.bashrc  # or restart your shell
+#+end_src
+
+** Workflow Examples
+
+*** Starting a New Engagement
+#+begin_src bash
+# Navigate to hackmode base
+hackmode
+
+# Create new operation (using Emacs)
+emacs -e "(hackmode-init)"
+
+# Switch to the new operation
+shm
+
+# Edit operation settings
+hackmode-setting
+
+# Navigate around
+cdhm
+#+end_src
+
+*** Switching Between Operations
+#+begin_src bash
+# Quick switch with fzf
+shm
+
+# Check current operation
+echo "Current: $HACKMODE_OP at $HACKMODE_PATH"
+
+# List all settings
+list-hackmode-settings
+#+end_src
+
+** Tips
+- Use =shm= for quick operation switching without leaving the terminal
+- Combine with direnv for automatic environment loading
+- Use =hackmode-setting= to manage per-operation configurations
+- The =cdhm= alias is useful in scripts that need to work in the current operation directory

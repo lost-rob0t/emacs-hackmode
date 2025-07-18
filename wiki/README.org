@@ -1,18 +1,48 @@
-#+TITLE: Readme
+#+TITLE: Hackmode Wiki
+
+* Overview
+hackmode is a comprehensive Emacs package designed to streamline penetration testing workflows by providing integrated tools for operation management, asset tracking, and automation - all from within your favorite editor.
+
+At its core is the concept of an *operation* - a structured workspace for each engagement with isolated environments, organized files, and integrated tooling.
+
+** Current Features
+- *Operation Management*: Create and switch between different pentesting engagements with isolated workspaces
+- *Asset Tracking*: BBRF (Bug Bounty Reconnaissance Framework) integration for managing targets, domains, IPs, and URLs
+- *File Upload Helper*: Generate wget/curl commands for easy file transfers to target systems
+- *Target Management*: Keep track of current targets with completion and easy switching
+- *Checklist Integration*: Copy and manage methodology checklists per target
+- *Searchsploit Integration*: Browse and search exploit database from within Emacs
+- *Capture System*: Structured note-taking and command capture
+- *Environment Integration*: Automatic environment variable setup for proper isolation
+- *Auto-completion*: Enhanced completion for hackmode commands and targets
 
 
-* README
-Long story short hackmode is a set of scripts to help you manage and run pentesting/bug bounty engagements. At the core of it is the concept of an operation, which is just a working directory where you work in.
-other ideas for the mode include a listing of assets and findings. This is a Work in progress package, where stuff is added as i find a use for something.
+** Planned Features *(needs cleanup)*
+Several additional features are in development and need refinement:
+- Workflow automation system
+- Advanced tool integration interfaces
+- Backend automation scripts (currently nextflow, maybe startintel)
+- Enhanced BBRF command completion
+- Target autocomplete
+- eshell integration with tooling.
+- More transient menus for common tools (not even started yet)
 
-Also see the [[https://github.com/lost-rob0t/hackmode][complementary common lisp version]].
+** Documentation Sections
++ [[file:./ops.org][Operations]] - Core operation management
++ [[file:./bbrf.org][BBRF Integration]] - Asset tracking and reconnaissance framework
++ [[file:./capture.org][Capture System]] - Note-taking and command capture
++ [[file:./searchsploit.org][Searchsploit]] - Exploit database integration (No longer supported, bug me if you need it)
++ [[file:./env.org][Environment Variables]] - System environment setup
++ [[file:./checklists.org][Checklists]] - Methodology and task management
++ [[file:./system-config.org][System Integration]] - Configuration and external tool integration
++ [[file:./targets.org][Target Management]] - Focus and snippet integration
++ [[file:./shell-integration.org][Shell Integration]] - Command-line functions and aliases
 
-Sections
-+ [[file:./ops.org][operations]]
-+ [[file:capture.org]]
-+ [[./searchsploit.org][searchsploit]]
-+ [[./env.org][Env Vars]]
-+ [[./checklists.org][Check lists]]
-+ [[file:system-config.org][System Interaction/Config]]
-+ [[file:targets.org][Targets]]
-+ TODO hackmode-menu
+** Quick Start
+1. Create an operation: =M-x hackmode-menu= → =c= (Create operation)
+2. Add targets: =M-x hackmode-add-target=
+3. Set current target: =M-x hackmode-select-target=
+4. Use checklists: =M-x hackmode-use-checklist=
+
+** Related Projects
+- [[https://github.com/lost-rob0t/hackmode][Common Lisp shell version]] - Alternative implementation as a Lisp shell interface
