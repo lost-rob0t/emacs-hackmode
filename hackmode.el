@@ -630,13 +630,13 @@
 (defun hackmode-bbrf-add-inscope (domains)
   "Add DOMAINS to inscope for the current program."
   (interactive "sDomains to add to inscope (space-separated): ")
-  (hackmode-bbrf-execute-command "inscope" "add" (split-string domains))
+  (hackmode-bbrf-execute-command "inscope " "add" domains)
   (message "Added domains to inscope: %s" domains))
 
 (defun hackmode-bbrf-add-outscope (domains)
   "Add DOMAINS to outscope for the current program."
   (interactive "sDomains to add to outscope (space-separated): ")
-  (hackmode-bbrf-execute-command "outscope" "add" (split-string domains))
+  (hackmode-bbrf-execute-command "outscope" "add" domains)
   (message "Added domains to outscope: %s" domains))
 
 
