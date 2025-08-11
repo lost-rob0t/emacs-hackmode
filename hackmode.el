@@ -779,7 +779,10 @@
   [["Add To BBRF"
     ("u" "Add Urls" hackmode-bbrf-add-urls :transient t)
     ("i" "Add IPS" hackmode-bbrf-add-ips :transient t)
-    ("d" "Add domains" hackmode-bbrf-add-domains :transient t)]
+    ("d" "Add domains" hackmode-bbrf-add-domains :transient t)
+    ("rd" "Add Domains from region" hackmode-bbrf-domains-from-region :transient t)
+    ("ru" "Add urls from region" hackmode-bbrf-urls-from-region :transient t)
+    ("ri" "Add ips from region" hackmode-bbrf-ips-from-region :transient t)]
 
    ["Tags"
     (:info #'hackmode-bbrf--display-tags)
@@ -793,7 +796,9 @@
     ("c" "Create program" hackmode-bbrf-create-program :transient t)
     ("s" "Set program" hackmode-bbrf-set-program :transient t)
     ("I" "Add to inscope" hackmode-bbrf-add-inscope :transient t)
-    ("o" "Add to outscope" hackmode-bbrf-add-outscope :transient t)
+    ("O" "Add to outscope" hackmode-bbrf-add-outscope :transient t)
+    ("rO" "Outscope from region" hackmode-bbrf-outscope-from-region :transient t)
+    ("rI" "Add to inscope" hackmode-bbrf-inscope-from-region :transient t)
     ("l" "Start listener" hackmode-bbrf-start-listener :transient t)]])
 
 ;;;###autoload
