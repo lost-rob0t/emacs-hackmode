@@ -727,10 +727,10 @@
     (mapcar #'hackmode-bbrf-add-inscope scopes)))
 
 (defun hackmode-bbrf-outscope-from-region (start end)
-  "Add inscope from the selected region to BBRF."
+  "Add outscope from the selected region to BBRF."
   (interactive "r")
   (let ((scopes (split-string (buffer-substring-no-properties start end) "\n")))
-    (mapcar #'hackmode-bbrf-add-inscope scopes)))
+    (mapcar #'hackmode-bbrf-add-outscope scopes)))
 
 (defun hackmode-bbrf-ips-from-region (start end)
   "Add domains from the selected region to BBRF."
