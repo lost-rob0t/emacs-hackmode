@@ -24,7 +24,6 @@
 ;;  TODO Remove f.el deps
 (require 'f)
 (require 'transient)
-(require 'hackmode-tools)
 
 
 
